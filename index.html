@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>귀여운 도트 고양이 점프 게임</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body {
+      background-color: #1a1a24;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #game-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      color: #ffd166;
+      text-shadow: 2px 2px #000;
+    }
+    .audio-btn {
+      background: #444;
+      border: 2px solid #666;
+      color: #fff;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    canvas {
+      width: 100%;
+      height: auto;
+      background-color: #fdf6e3;
+      border: 4px solid #4a3b32;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .controls-hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+    }
+    .touch-jump-btn {
+      margin-top: 15px;
+      width: 90%;
+      padding: 15px;
+      background: linear-gradient(180deg, #ff9f43, #ee5253);
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 5px 0 #b12829;
+      active: transform 0.1s;
+      cursor: pointer;
+      display: block;
+    }
+    .touch-jump-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #b12829;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <div class="header">
+    <h1>🐱 모바일 도트 고양이 점프</h1>
+    <button class="audio-btn" id="audioToggle">🔊 음소거</button>
+  </div>
+  <canvas id="gameCanvas" width="600" height="320"></canvas>
+  <button class="touch-jump-btn" id="jumpBtn">🦘 점프! (터치)</button>
+  <div class="controls-hint">화면 아무 곳이나 터치 / 스페이스바 / 버튼 클릭</div>
+</div>
+
+<script>
+  // Web Audio API Synth Engine for Cute 8-bit Sounds & BGM
+  class CuteAudioEngine {
+    constructor() {
+      this.ctx = null;
+      this.muted = false;
+      this.bgmTimer = null;
+      this.bgmIndex = 0;
+      
+      // Cute Pentatonic Chiptune Melody
+      this.melody = [
+        { note: 523.25, duration: 0.2 }, // C5
+        { note: 659.25, duration: 0.2 }, // E5
+        { note: 783.99, duration: 0.2 }, // G5
+        { note: 880.00, duration: 0.2 }, // A5
+        { note: 1046.50, duration: 0.4 }, // C6
+        { note: 880.00, duration: 0.2 }, // A5
+        { note: 783.99, duration: 0.4 }, // G5
+        { note: 659.25, duration: 0.2 }, // E5
+        { note: 587.33, duration: 0.2 }, // D5
+        { note: 523.25, duration: 0.4 }, // C5
+      ];
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AudioCtx();
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    }
+
+    playJump() {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.12);
+      
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.12);
+    }
+
+    playMeow() { // Cute Item Collect Sound
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.08);
+      osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.2);
+      
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.2);
+    }
+
+    playGameOver() {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(120, this.ctx.currentTime + 0.4);
+      
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.4);
+    }
+
+    startBGM() {
+      if (this.bgmTimer) return;
+      this.init();
+      this.playNextBGMNote();
+    }
+
+    playNextBGMNote() {
+      if (this.muted) {
+        this.bgmTimer = setTimeout(() => this.playNextBGMNote(), 300);
+        return;
+      }
+      this.init();
+      const item = this.melody[this.bgmIndex];
+      
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(item.note, this.ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.005, this.ctx.currentTime + item.duration * 0.9);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      
+      osc.start();
+      osc.stop(this.ctx.currentTime + item.duration * 0.9);
+      
+      this.bgmIndex = (this.bgmIndex + 1) % this.melody.length;
+      this.bgmTimer = setTimeout(() => this.playNextBGMNote(), item.duration * 1000);
+    }
+  }
+
+  const audio = new CuteAudioEngine();
+  const audioBtn = document.getElementById('audioToggle');
+  audioBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    audio.muted = !audio.muted;
+    audioBtn.textContent = audio.muted ? '🔇 음소거 중' : '🔊 소리 켬';
+  });
+
+  // Canvas & Game Loop Setup
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  let score = 0;
+  let fishesCollected = 0;
+  let highScore = localStorage.getItem('cat_high_score') || 0;
+  let gameOver = false;
+  let gameStarted = false;
+  let frame = 0;
+
+  // Cat Object (Tabby brown, dark stripes, green eyes)
+  const cat = {
+    x: 70,
+    y: 210,
+    width: 48,
+    height: 34,
+    dy: 0,
+    gravity: 0.65,
+    jumpPower: -11.5,
+    isGrounded: true,
+    legFrame: 0,
+
+    draw() {
+      ctx.save();
+      
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.beginPath();
+      ctx.ellipse(this.x + 22, 242, 20, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Main body (Tabby Coat Brown #7a5e4b)
+      ctx.fillStyle = '#7a5e4b';
+      ctx.fillRect(this.x + 4, this.y + 8, 36, 22);
+
+      // Dark Tabby Stripes
+      ctx.fillStyle = '#3d2e24';
+      ctx.fillRect(this.x + 12, this.y + 10, 4, 16);
+      ctx.fillRect(this.x + 20, this.y + 10, 4, 16);
+      ctx.fillRect(this.x + 28, this.y + 10, 4, 16);
+
+      // Head
+      ctx.fillStyle = '#7a5e4b';
+      ctx.fillRect(this.x + 28, this.y - 6, 20, 20);
+
+      // Muzzle / Face detail
+      ctx.fillStyle = '#9e806c';
+      ctx.fillRect(this.x + 38, this.y + 6, 10, 8);
+
+      // Ears
+      ctx.fillStyle = '#3d2e24';
+      ctx.fillRect(this.x + 30, this.y - 14, 6, 8);
+      ctx.fillRect(this.x + 40, this.y - 14, 6, 8);
+      ctx.fillStyle = '#fca5a5'; // inner ear pink
+      ctx.fillRect(this.x + 32, this.y - 12, 3, 5);
+      ctx.fillRect(this.x + 42, this.y - 12, 3, 5);
+
+      // Emerald Green Eye
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(this.x + 40, this.y, 5, 5);
+      ctx.fillStyle = '#042f2e'; // pupil
+      ctx.fillRect(this.x + 42, this.y + 1, 2, 3);
+
+      // Whiskers
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + 46, this.y + 8, 6, 1);
+      ctx.fillRect(this.x + 46, this.y + 11, 6, 1);
+
+      // Tail
+      ctx.fillStyle = '#3d2e24';
+      const tailAnim = Math.sin(frame * 0.25) * 5;
+      ctx.fillRect(this.x - 8, this.y + 6 + tailAnim, 12, 5);
+
+      // Animated Legs
+      ctx.fillStyle = '#3d2e24';
+      if (this.isGrounded) {
+        this.legFrame = (this.legFrame + 0.3) % 4;
+        const offset = Math.sin(this.legFrame) * 4;
+        ctx.fillRect(this.x + 8 + offset, this.y + 30, 6, 6);
+        ctx.fillRect(this.x + 28 - offset, this.y + 30, 6, 6);
+      } else {
+        // Jumping legs position
+        ctx.fillRect(this.x + 4, this.y + 28, 8, 5);
+        ctx.fillRect(this.x + 32, this.y + 28, 8, 5);
+      }
+
+      ctx.restore();
+    },
+
+    jump() {
+      if (this.isGrounded) {
+        this.dy = this.jumpPower;
+        this.isGrounded = false;
+        audio.playJump();
+      }
+    },
+
+    update() {
+      this.dy += this.gravity;
+      this.y += this.dy;
+
+      if (this.y >= 208) {
+        this.y = 208;
+        this.dy = 0;
+        this.isGrounded = true;
+      }
+      this.draw();
+    }
+  };
+
+  // Obstacles & Items Arrays
+  const obstacles = [];
+  const fishes = [];
+  let obstacleTimer = 0;
+  let fishTimer = 0;
+
+  function createObstacle() {
+    const types = ['ball', 'box'];
+    const type = types[Math.floor(Math.random() * types.length)];
+    obstacles.push({
+      x: canvas.width,
+      y: 216,
+      width: 22,
+      height: 26,
+      type: type,
+      speed: 4.8 + Math.floor(score / 200) * 0.5
+    });
+  }
+
+  function createFish() {
+    fishes.push({
+      x: canvas.width,
+      y: 130 + Math.random() * 50,
+      width: 20,
+      height: 14,
+      speed: 4.8 + Math.floor(score / 200) * 0.5,
+      bob: Math.random() * 10
+    });
+  }
+
+  // User Action Handler
+  function handleInput() {
+    audio.startBGM();
+    if (!gameStarted) {
+      gameStarted = true;
+      restartGame();
+      return;
+    }
+    if (gameOver) {
+      restartGame();
+    } else {
+      cat.jump();
+    }
+  }
+
+  // Event Listeners for Touch / Keyboard
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.code === 'ArrowUp') {
+      e.preventDefault();
+      handleInput();
+    }
+  });
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleInput();
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', (e) => {
+    handleInput();
+  });
+
+  document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    handleInput();
+  }, { passive: false });
+
+  document.getElementById('jumpBtn').addEventListener('click', (e) => {
+    handleInput();
+  });
+
+  function restartGame() {
+    cat.y = 208;
+    cat.dy = 0;
+    obstacles.length = 0;
+    fishes.length = 0;
+    score = 0;
+    fishesCollected = 0;
+    gameOver = false;
+    obstacleTimer = 0;
+    fishTimer = 0;
+  }
+
+  // Game Loop
+  function gameLoop() {
+    frame++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background - Sky gradient
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, 240);
+    skyGradient.addColorStop(0, '#fef3c7');
+    skyGradient.addColorStop(1, '#fde68a');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, canvas.width, 240);
+
+    // Ground
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(0, 240, canvas.width, 80);
+    ctx.fillStyle = '#a16207';
+    ctx.fillRect(0, 240, canvas.width, 6);
+
+    // Decorative Ground Pixel Dots
+    ctx.fillStyle = '#92400e';
+    for (let i = 0; i < canvas.width; i += 30) {
+      const offsetX = (i - (frame * 2)) % canvas.width;
+      const posX = offsetX < 0 ? offsetX + canvas.width : offsetX;
+      ctx.fillRect(posX, 255, 12, 3);
+    }
+
+    if (!gameStarted) {
+      cat.draw();
+      ctx.fillStyle = '#451a03';
+      ctx.font = 'bold 22px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText('🐱 터치하거나 버튼을 눌러 시작!', canvas.width / 2, 120);
+      ctx.font = '14px Courier New';
+      ctx.fillText(`최고 기록: ${highScore}점`, canvas.width / 2, 150);
+      requestAnimationFrame(gameLoop);
+      return;
+    }
+
+    if (!gameOver) {
+      score++;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('cat_high_score', highScore);
+      }
+    }
+
+    // Cat Update
+    cat.update();
+
+    // Spawning Logic
+    obstacleTimer++;
+    if (obstacleTimer > 75 + Math.random() * 40) {
+      createObstacle();
+      obstacleTimer = 0;
+    }
+
+    fishTimer++;
+    if (fishTimer > 110 + Math.random() * 60) {
+      createFish();
+      fishTimer = 0;
+    }
+
+    // Process Fish Items
+    for (let i = fishes.length - 1; i >= 0; i--) {
+      const f = fishes[i];
+      if (!gameOver) f.x -= f.speed;
+
+      // Draw Fish (Cute Golden Fish)
+      const floatY = f.y + Math.sin(frame * 0.1 + f.bob) * 4;
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(f.x, floatY, 14, 10);
+      ctx.fillRect(f.x + 14, floatY - 3, 6, 16); // Tail
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(f.x + 3, floatY + 2, 3, 3); // Eye
+
+      // Catch Fish Collision
+      if (
+        cat.x < f.x + f.width &&
+        cat.x + cat.width > f.x &&
+        cat.y < floatY + f.height &&
+        cat.y + cat.height > floatY
+      ) {
+        fishes.splice(i, 1);
+        score += 150;
+        fishesCollected++;
+        audio.playMeow();
+        continue;
+      }
+
+      if (f.x + f.width < 0) fishes.splice(i, 1);
+    }
+
+    // Process Obstacles
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      const obs = obstacles[i];
+      if (!gameOver) obs.x -= obs.speed;
+
+      if (obs.type === 'ball') {
+        // Red Yarn Ball
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(obs.x + 11, obs.y + 11, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(obs.x + 4, obs.y + 8, 14, 4);
+      } else {
+        // Cardboard Box
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
+      }
+
+      // Hitbox Collision
+      if (
+        cat.x + 6 < obs.x + obs.width &&
+        cat.x + cat.width - 6 > obs.x &&
+        cat.y + 6 < obs.y + obs.height &&
+        cat.y + cat.height > obs.y
+      ) {
+        if (!gameOver) {
+          gameOver = true;
+          audio.playGameOver();
+        }
+      }
+
+      if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+    }
+
+    // UI Overlay - Score & Fish Counter
+    ctx.fillStyle = '#451a03';
+    ctx.font = 'bold 16px Courier New';
+    ctx.textAlign = 'left';
+    ctx.fillText(`SCORE: ${score}`, 15, 28);
+    ctx.fillText(`🐟 x ${fishesCollected}`, 150, 28);
+    ctx.textAlign = 'right';
+    ctx.fillText(`BEST: ${highScore}`, canvas.width - 15, 28);
+
+    // Game Over Overlay
+    if (gameOver) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 26px Courier New';
+      ctx.fillText('GAME OVER', canvas.width / 2, 110);
+      
+      ctx.font = '16px Courier New';
+      ctx.fillStyle = '#fde047';
+      ctx.fillText(`최종 점수: ${score}점 (생선 ${fishesCollected}개)`, canvas.width / 2, 150);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '14px Courier New';
+      ctx.fillText('화면을 터치하여 다시 시작', canvas.width / 2, 190);
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+
+</body>
+</html>
