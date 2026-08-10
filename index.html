@@ -113,18 +113,17 @@
       this.bgmTimer = null;
       this.bgmIndex = 0;
       
-      // Cute Pentatonic Chiptune Melody
       this.melody = [
-        { note: 523.25, duration: 0.2 }, // C5
-        { note: 659.25, duration: 0.2 }, // E5
-        { note: 783.99, duration: 0.2 }, // G5
-        { note: 880.00, duration: 0.2 }, // A5
-        { note: 1046.50, duration: 0.4 }, // C6
-        { note: 880.00, duration: 0.2 }, // A5
-        { note: 783.99, duration: 0.4 }, // G5
-        { note: 659.25, duration: 0.2 }, // E5
-        { note: 587.33, duration: 0.2 }, // D5
-        { note: 523.25, duration: 0.4 }, // C5
+        { note: 523.25, duration: 0.2 },
+        { note: 659.25, duration: 0.2 },
+        { note: 783.99, duration: 0.2 },
+        { note: 880.00, duration: 0.2 },
+        { note: 1046.50, duration: 0.4 },
+        { note: 880.00, duration: 0.2 },
+        { note: 783.99, duration: 0.4 },
+        { note: 659.25, duration: 0.2 },
+        { note: 587.33, duration: 0.2 },
+        { note: 523.25, duration: 0.4 },
       ];
     }
 
@@ -160,7 +159,7 @@
       osc.stop(this.ctx.currentTime + 0.12);
     }
 
-    playMeow() { // Cute Item Collect Sound
+    playMeow() {
       if (this.muted) return;
       this.init();
       const osc = this.ctx.createOscillator();
@@ -241,7 +240,6 @@
     audioBtn.textContent = audio.muted ? '🔇 음소거 중' : '🔊 소리 켬';
   });
 
-  // Canvas & Game Loop Setup
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
 
@@ -252,7 +250,6 @@
   let gameStarted = false;
   let frame = 0;
 
-  // Cat Object (Tabby brown, dark stripes, green eyes)
   const cat = {
     x: 70,
     y: 210,
@@ -269,55 +266,45 @@
     draw() {
       ctx.save();
       
-      // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
       ctx.ellipse(this.x + 22, 242, 20, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Main body (Tabby Coat Brown #7a5e4b)
       ctx.fillStyle = '#7a5e4b';
       ctx.fillRect(this.x + 4, this.y + 8, 36, 22);
 
-      // Dark Tabby Stripes
       ctx.fillStyle = '#3d2e24';
       ctx.fillRect(this.x + 12, this.y + 10, 4, 16);
       ctx.fillRect(this.x + 20, this.y + 10, 4, 16);
       ctx.fillRect(this.x + 28, this.y + 10, 4, 16);
 
-      // Head
       ctx.fillStyle = '#7a5e4b';
       ctx.fillRect(this.x + 28, this.y - 6, 20, 20);
 
-      // Muzzle / Face detail
       ctx.fillStyle = '#9e806c';
       ctx.fillRect(this.x + 38, this.y + 6, 10, 8);
 
-      // Ears
       ctx.fillStyle = '#3d2e24';
       ctx.fillRect(this.x + 30, this.y - 14, 6, 8);
       ctx.fillRect(this.x + 40, this.y - 14, 6, 8);
-      ctx.fillStyle = '#fca5a5'; // inner ear pink
+      ctx.fillStyle = '#fca5a5';
       ctx.fillRect(this.x + 32, this.y - 12, 3, 5);
       ctx.fillRect(this.x + 42, this.y - 12, 3, 5);
 
-      // Emerald Green Eye
       ctx.fillStyle = '#10b981';
       ctx.fillRect(this.x + 40, this.y, 5, 5);
-      ctx.fillStyle = '#042f2e'; // pupil
+      ctx.fillStyle = '#042f2e';
       ctx.fillRect(this.x + 42, this.y + 1, 2, 3);
 
-      // Whiskers
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(this.x + 46, this.y + 8, 6, 1);
       ctx.fillRect(this.x + 46, this.y + 11, 6, 1);
 
-      // Tail
       ctx.fillStyle = '#3d2e24';
       const tailAnim = Math.sin(frame * 0.25) * 5;
       ctx.fillRect(this.x - 8, this.y + 6 + tailAnim, 12, 5);
 
-      // Animated Legs
       ctx.fillStyle = '#3d2e24';
       if (this.isGrounded) {
         this.legFrame = (this.legFrame + 0.3) % 4;
@@ -325,7 +312,6 @@
         ctx.fillRect(this.x + 8 + offset, this.y + 30, 6, 6);
         ctx.fillRect(this.x + 28 - offset, this.y + 30, 6, 6);
       } else {
-        // Jumping legs position
         ctx.fillRect(this.x + 4, this.y + 28, 8, 5);
         ctx.fillRect(this.x + 32, this.y + 28, 8, 5);
       }
@@ -356,7 +342,6 @@
     }
   };
 
-  // Obstacles & Items Arrays
   const obstacles = [];
   const fishes = [];
   let obstacleTimer = 0;
@@ -394,7 +379,6 @@
     });
   }
 
-  // User Action Handler
   function handleInput() {
     audio.startBGM();
     if (!gameStarted) {
@@ -409,7 +393,6 @@
     }
   }
 
-  // Event Listeners for Touch / Keyboard
   window.addEventListener('keydown', (e) => {
     if (e.code === 'Space' || e.code === 'ArrowUp') {
       e.preventDefault();
@@ -435,8 +418,6 @@
     handleInput();
   });
 
-
-  // Human Characters & Snacks System
   const humanTypes = [
     { name: '터보', count: 10, color: '#3b82f6', hairColor: '#27272a', hairStyle: 'short', glasses: true },
     { name: '누렁', count: 8, color: '#ec4899', hairColor: '#451a03', hairStyle: 'long', glasses: false },
@@ -445,7 +426,7 @@
   ];
 
   let activeHuman = null;
-  let humanTimer = 0;
+  let nextHumanScore = 3000;
   const treats = [];
 
   function spawnHuman() {
@@ -456,7 +437,7 @@
       x: canvas.width + 30,
       y: 160,
       targetX: canvas.width - 90,
-      state: 'entering', // entering, throwing, leaving
+      state: 'entering',
       timer: 0,
       thrownCount: 0
     };
@@ -465,50 +446,43 @@
   function drawHuman(h) {
     ctx.save();
 
-    // Body / Clothes
     ctx.fillStyle = h.color;
     ctx.fillRect(h.x + 6, h.y + 24, 20, 28);
 
-    // Head
-    ctx.fillStyle = '#fde047'; // Skin tone
+    ctx.fillStyle = '#fde047';
     ctx.fillRect(h.x + 8, h.y + 6, 16, 18);
 
-    // Hair
     ctx.fillStyle = h.hairColor;
-    if (h.hairStyle === 'short') { // Turbo (Male)
+    if (h.hairStyle === 'short') {
       ctx.fillRect(h.x + 6, h.y + 2, 20, 8);
-    } else if (h.hairStyle === 'long') { // Nureong (Long hair adult female)
+    } else if (h.hairStyle === 'long') {
       ctx.fillRect(h.x + 6, h.y + 2, 20, 10);
       ctx.fillRect(h.x + 4, h.y + 10, 6, 22);
       ctx.fillRect(h.x + 22, h.y + 10, 6, 22);
-    } else if (h.hairStyle === 'long_girl') { // Yoo (Long hair girl)
+    } else if (h.hairStyle === 'long_girl') {
       ctx.fillRect(h.x + 6, h.y + 2, 20, 8);
       ctx.fillRect(h.x + 4, h.y + 8, 5, 26);
       ctx.fillRect(h.x + 23, h.y + 8, 5, 26);
-    } else if (h.hairStyle === 'braids') { // Ah (Twin braids)
+    } else if (h.hairStyle === 'braids') {
       ctx.fillRect(h.x + 6, h.y + 2, 20, 8);
-      // Twin Braids
       ctx.fillRect(h.x + 2, h.y + 10, 5, 20);
       ctx.fillRect(h.x + 25, h.y + 10, 5, 20);
-      ctx.fillStyle = '#ef4444'; // Hair ties
+      ctx.fillStyle = '#ef4444';
       ctx.fillRect(h.x + 1, h.y + 22, 7, 3);
       ctx.fillRect(h.x + 24, h.y + 22, 7, 3);
     }
 
-    // Glasses for Turbo
     if (h.glasses) {
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(h.x + 10, h.y + 12, 5, 5);
       ctx.fillRect(h.x + 17, h.y + 12, 5, 5);
       ctx.fillRect(h.x + 15, h.y + 14, 2, 1);
     } else {
-      // Eyes
       ctx.fillStyle = '#000000';
       ctx.fillRect(h.x + 11, h.y + 13, 3, 3);
       ctx.fillRect(h.x + 18, h.y + 13, 3, 3);
     }
 
-    // Name Label
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px Courier New';
     ctx.textAlign = 'center';
@@ -530,16 +504,25 @@
     } else if (h.state === 'throwing') {
       h.timer++;
       if (h.timer % 12 === 0 && h.thrownCount < h.count) {
-        // Throw treat
+        const snackTypes = ['churru', 'can', 'biscuit'];
+        const type = snackTypes[Math.floor(Math.random() * snackTypes.length)];
+        let pts = 200;
+        let w = 18, hHeight = 12;
+
+        if (type === 'churru') { pts = 250; w = 22; hHeight = 8; }
+        else if (type === 'can') { pts = 300; w = 16; hHeight = 14; }
+        else if (type === 'biscuit') { pts = 200; w = 14; hHeight = 14; }
+
         treats.push({
           x: h.x,
           y: h.y + 10,
           vx: -(3 + Math.random() * 4),
           vy: -(4 + Math.random() * 4),
           gravity: 0.25,
-          width: 18,
-          height: 12,
-          isGrounded: false
+          width: w,
+          height: hHeight,
+          type: type,
+          points: pts
         });
         h.thrownCount++;
         audio.playMeow();
@@ -559,7 +542,7 @@
 
   function restartGame() {
     activeHuman = null;
-    humanTimer = 0;
+    nextHumanScore = 3000;
     treats.length = 0;
     cat.y = 208;
     cat.dy = 0;
@@ -572,25 +555,21 @@
     fishTimer = 0;
   }
 
-  // Game Loop
   function gameLoop() {
     frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Background - Sky gradient
     const skyGradient = ctx.createLinearGradient(0, 0, 0, 240);
     skyGradient.addColorStop(0, '#fef3c7');
     skyGradient.addColorStop(1, '#fde68a');
     ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, canvas.width, 240);
 
-    // Ground
     ctx.fillStyle = '#78350f';
     ctx.fillRect(0, 240, canvas.width, 80);
     ctx.fillStyle = '#a16207';
     ctx.fillRect(0, 240, canvas.width, 6);
 
-    // Decorative Ground Pixel Dots
     ctx.fillStyle = '#92400e';
     for (let i = 0; i < canvas.width; i += 30) {
       const offsetX = (i - (frame * 2)) % canvas.width;
@@ -618,19 +597,15 @@
       }
     }
 
-    // Cat Update
     cat.update();
 
-    // Human Characters Spawning Logic (Every 18-28 seconds)
-    humanTimer++;
-    if (humanTimer > 800 + Math.random() * 400) {
+    if (score >= nextHumanScore) {
       spawnHuman();
-      humanTimer = 0;
+      nextHumanScore += 3000;
     }
 
     updateHuman();
 
-    // Process Human Treats
     for (let i = treats.length - 1; i >= 0; i--) {
       const t = treats[i];
       if (!gameOver) {
@@ -641,17 +616,27 @@
         if (t.y >= 228) {
           t.y = 228;
           t.vy = 0;
-          t.vx = -3; // Move left along the ground with background
+          t.vx = -3;
         }
       }
 
-      // Draw Treat (Cute Snack Pouch / Churru)
-      ctx.fillStyle = '#ef4444'; // Red snack pouch
-      ctx.fillRect(t.x, t.y, t.width, t.height);
-      ctx.fillStyle = '#fde047'; // Gold star/accent on treat
-      ctx.fillRect(t.x + 4, t.y + 3, 10, 6);
+      if (t.type === 'churru') {
+        ctx.fillStyle = '#ec4899';
+        ctx.fillRect(t.x, t.y, t.width, t.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(t.x + 2, t.y + 2, 4, t.height - 4);
+      } else if (t.type === 'can') {
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(t.x, t.y, t.width, t.height);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(t.x, t.y, t.width, 3);
+      } else {
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(t.x, t.y, t.width, t.height);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(t.x + 3, t.y + 3, 4, 4);
+      }
 
-      // Collect Treat Collision (+200 points per treat!)
       if (
         cat.x < t.x + t.width &&
         cat.x + cat.width > t.x &&
@@ -659,8 +644,8 @@
         cat.y + cat.height > t.y
       ) {
         treats.splice(i, 1);
-        score += 200;
-        fishesCollected++; // Count towards collected snacks
+        score += (t.points || 200);
+        fishesCollected++;
         audio.playMeow();
         continue;
       }
@@ -668,7 +653,6 @@
       if (t.x + t.width < 0) treats.splice(i, 1);
     }
 
-    // Spawning Logic
     obstacleTimer++;
     if (obstacleTimer > 52 + Math.random() * 35) {
       createObstacle();
@@ -681,20 +665,17 @@
       fishTimer = 0;
     }
 
-    // Process Fish Items
     for (let i = fishes.length - 1; i >= 0; i--) {
       const f = fishes[i];
       if (!gameOver) f.x -= f.speed;
 
-      // Draw Fish (Cute Golden Fish)
       const floatY = f.y + Math.sin(frame * 0.1 + f.bob) * 4;
       ctx.fillStyle = '#f97316';
       ctx.fillRect(f.x, floatY, 14, 10);
-      ctx.fillRect(f.x + 14, floatY - 3, 6, 16); // Tail
+      ctx.fillRect(f.x + 14, floatY - 3, 6, 16);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(f.x + 3, floatY + 2, 3, 3); // Eye
+      ctx.fillRect(f.x + 3, floatY + 2, 3, 3);
 
-      // Catch Fish Collision
       if (
         cat.x < f.x + f.width &&
         cat.x + cat.width > f.x &&
@@ -711,13 +692,11 @@
       if (f.x + f.width < 0) fishes.splice(i, 1);
     }
 
-    // Process Obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obs = obstacles[i];
       if (!gameOver) obs.x -= obs.speed;
 
       if (obs.type === 'ball') {
-        // Red Yarn Ball
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(obs.x + 12, obs.y + 12, 12, 0, Math.PI * 2);
@@ -725,21 +704,18 @@
         ctx.fillStyle = '#b91c1c';
         ctx.fillRect(obs.x + 4, obs.y + 8, 16, 4);
       } else if (obs.type === 'tall_box') {
-        // Double Stacked Cardboard Box (Requires Double Jump!)
         ctx.fillStyle = '#b45309';
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
         ctx.fillStyle = '#78350f';
         ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
         ctx.fillRect(obs.x + 2, obs.y + 22, obs.width - 4, 4);
       } else {
-        // Cardboard Box
         ctx.fillStyle = '#d97706';
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
         ctx.fillStyle = '#92400e';
         ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
       }
 
-      // Hitbox Collision
       if (
         cat.x + 6 < obs.x + obs.width &&
         cat.x + cat.width - 6 > obs.x &&
@@ -755,7 +731,6 @@
       if (obs.x + obs.width < 0) obstacles.splice(i, 1);
     }
 
-    // UI Overlay - Score & Fish Counter
     ctx.fillStyle = '#451a03';
     ctx.font = 'bold 16px Courier New';
     ctx.textAlign = 'left';
@@ -764,7 +739,6 @@
     ctx.textAlign = 'right';
     ctx.fillText(`BEST: ${highScore}`, canvas.width - 15, 28);
 
-    // Game Over Overlay
     if (gameOver) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -776,7 +750,7 @@
       
       ctx.font = '16px Courier New';
       ctx.fillStyle = '#fde047';
-      ctx.fillText(`최종 점수: ${score}점 (생선 ${fishesCollected}개)`, canvas.width / 2, 150);
+      ctx.fillText(`최종 점수: ${score}점 (간식 ${fishesCollected}개)`, canvas.width / 2, 150);
       
       ctx.fillStyle = '#ffffff';
       ctx.font = '14px Courier New';
