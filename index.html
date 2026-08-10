@@ -101,7 +101,7 @@
   </div>
   <canvas id="gameCanvas" width="600" height="320"></canvas>
   <button class="touch-jump-btn" id="jumpBtn">🦘 점프! (터치)</button>
-  <div class="controls-hint">화면 아무 곳이나 터치 / 스페이스바 / 버튼 클릭</div>
+  <div class="controls-hint">🐱 2단 점프 가능! (화면 연속 터치 / 스페이스바 / 버튼)</div>
 </div>
 
 <script>
@@ -138,15 +138,18 @@
       }
     }
 
-    playJump() {
+    playJump(isDouble = false) {
       if (this.muted) return;
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       
+      const startFreq = isDouble ? 500 : 300;
+      const endFreq = isDouble ? 1100 : 800;
+      
       osc.type = 'square';
-      osc.frequency.setValueAtTime(300, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + 0.12);
       
       gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
@@ -257,8 +260,10 @@
     height: 34,
     dy: 0,
     gravity: 0.65,
-    jumpPower: -11.5,
+    jumpPower: -11.2,
     isGrounded: true,
+    jumpCount: 0,
+    maxJumps: 2,
     legFrame: 0,
 
     draw() {
@@ -329,10 +334,11 @@
     },
 
     jump() {
-      if (this.isGrounded) {
+      if (this.jumpCount < this.maxJumps) {
         this.dy = this.jumpPower;
         this.isGrounded = false;
-        audio.playJump();
+        this.jumpCount++;
+        audio.playJump(this.jumpCount === 2);
       }
     },
 
@@ -344,6 +350,7 @@
         this.y = 208;
         this.dy = 0;
         this.isGrounded = true;
+        this.jumpCount = 0;
       }
       this.draw();
     }
@@ -356,15 +363,23 @@
   let fishTimer = 0;
 
   function createObstacle() {
-    const types = ['ball', 'box'];
+    const types = ['ball', 'box', 'tall_box'];
     const type = types[Math.floor(Math.random() * types.length)];
+    let h = 26;
+    let y = 216;
+
+    if (type === 'tall_box') {
+      h = 44;
+      y = 198;
+    }
+
     obstacles.push({
       x: canvas.width,
-      y: 216,
-      width: 22,
-      height: 26,
+      y: y,
+      width: 24,
+      height: h,
       type: type,
-      speed: 4.8 + Math.floor(score / 200) * 0.5
+      speed: 5.5 + Math.floor(score / 180) * 0.6
     });
   }
 
@@ -483,7 +498,7 @@
 
     // Spawning Logic
     obstacleTimer++;
-    if (obstacleTimer > 75 + Math.random() * 40) {
+    if (obstacleTimer > 52 + Math.random() * 35) {
       createObstacle();
       obstacleTimer = 0;
     }
@@ -533,10 +548,17 @@
         // Red Yarn Ball
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
-        ctx.arc(obs.x + 11, obs.y + 11, 12, 0, Math.PI * 2);
+        ctx.arc(obs.x + 12, obs.y + 12, 12, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = '#b91c1c';
-        ctx.fillRect(obs.x + 4, obs.y + 8, 14, 4);
+        ctx.fillRect(obs.x + 4, obs.y + 8, 16, 4);
+      } else if (obs.type === 'tall_box') {
+        // Double Stacked Cardboard Box (Requires Double Jump!)
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
+        ctx.fillRect(obs.x + 2, obs.y + 22, obs.width - 4, 4);
       } else {
         // Cardboard Box
         ctx.fillStyle = '#d97706';
