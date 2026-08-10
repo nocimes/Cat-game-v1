@@ -82,7 +82,6 @@
       border: none;
       border-radius: 12px;
       box-shadow: 0 5px 0 #b12829;
-      active: transform 0.1s;
       cursor: pointer;
       display: block;
     }
@@ -159,24 +158,74 @@
       osc.stop(this.ctx.currentTime + 0.12);
     }
 
-    playMeow() {
+    playCanSound() {
+      if (this.muted) return;
+      this.init();
+      
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(350, this.ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.04);
+
+      const bufferSize = this.ctx.sampleRate * 0.1;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.15, this.ctx.currentTime + 0.02);
+      noiseGain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+      noise.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      noise.start(this.ctx.currentTime + 0.02);
+    }
+
+    playChurruSound() {
       if (this.muted) return;
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.08);
-      osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.2);
+      osc.frequency.setValueAtTime(450, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(900, this.ctx.currentTime + 0.08);
+      osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.18);
       
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
       
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.2);
+      osc.stop(this.ctx.currentTime + 0.18);
+    }
+
+    playCrunchSound() {
+      if (this.muted) return;
+      this.init();
+      const bufferSize = this.ctx.sampleRate * 0.07;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (i % 60 < 30 ? 1 : 0.3);
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
+      noise.connect(gain);
+      gain.connect(this.ctx.destination);
+      noise.start();
     }
 
     playGameOver() {
@@ -344,6 +393,7 @@
 
   const obstacles = [];
   const fishes = [];
+  const floatingTexts = [];
   let obstacleTimer = 0;
   let fishTimer = 0;
 
@@ -504,14 +554,14 @@
     } else if (h.state === 'throwing') {
       h.timer++;
       if (h.timer % 12 === 0 && h.thrownCount < h.count) {
-        const snackTypes = ['churru', 'can', 'biscuit'];
+        const snackTypes = ['can', 'churru', 'biscuit'];
         const type = snackTypes[Math.floor(Math.random() * snackTypes.length)];
         let pts = 200;
-        let w = 18, hHeight = 12;
+        let w = 20, hHeight = 18;
 
-        if (type === 'churru') { pts = 250; w = 22; hHeight = 8; }
-        else if (type === 'can') { pts = 300; w = 16; hHeight = 14; }
-        else if (type === 'biscuit') { pts = 200; w = 14; hHeight = 14; }
+        if (type === 'can') { pts = 300; w = 20; hHeight = 18; }
+        else if (type === 'churru') { pts = 250; w = 24; hHeight = 10; }
+        else if (type === 'biscuit') { pts = 200; w = 20; hHeight = 14; }
 
         treats.push({
           x: h.x,
@@ -525,7 +575,6 @@
           points: pts
         });
         h.thrownCount++;
-        audio.playMeow();
       }
       if (h.thrownCount >= h.count && h.timer > h.count * 12 + 20) {
         h.state = 'leaving';
@@ -544,6 +593,7 @@
     activeHuman = null;
     nextHumanScore = 3000;
     treats.length = 0;
+    floatingTexts.length = 0;
     cat.y = 208;
     cat.dy = 0;
     obstacles.length = 0;
@@ -613,29 +663,35 @@
         t.y += t.vy;
         t.vy += t.gravity;
 
-        if (t.y >= 228) {
-          t.y = 228;
+        if (t.y >= 222) {
+          t.y = 222;
           t.vy = 0;
           t.vx = -3;
         }
       }
 
-      if (t.type === 'churru') {
-        ctx.fillStyle = '#ec4899';
+      ctx.save();
+      if (t.type === 'can') {
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(t.x, t.y + 3, t.width, t.height - 3);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(t.x, t.y, t.width, 3);
+        ctx.fillRect(t.x + 6, t.y - 2, 8, 2);
+      } else if (t.type === 'churru') {
+        ctx.fillStyle = '#f43f5e';
         ctx.fillRect(t.x, t.y, t.width, t.height);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(t.x + 2, t.y + 2, 4, t.height - 4);
-      } else if (t.type === 'can') {
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(t.x, t.y, t.width, t.height);
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(t.x, t.y, t.width, 3);
+        ctx.fillRect(t.x + 4, t.y + 2, 2, t.height - 4);
+        ctx.fillStyle = '#fde047';
+        ctx.fillRect(t.x + t.width - 4, t.y, 4, t.height);
       } else {
         ctx.fillStyle = '#d97706';
-        ctx.fillRect(t.x, t.y, t.width, t.height);
+        ctx.fillRect(t.x, t.y + 2, 14, 10);
+        ctx.fillRect(t.x + 14, t.y, 6, 14);
         ctx.fillStyle = '#fef08a';
-        ctx.fillRect(t.x + 3, t.y + 3, 4, 4);
+        ctx.fillRect(t.x + 3, t.y + 4, 3, 3);
       }
+      ctx.restore();
 
       if (
         cat.x < t.x + t.width &&
@@ -643,10 +699,26 @@
         cat.y < t.y + t.height &&
         cat.y + cat.height > t.y
       ) {
+        if (t.type === 'can') {
+          audio.playCanSound();
+        } else if (t.type === 'churru') {
+          audio.playChurruSound();
+        } else {
+          audio.playCrunchSound();
+        }
+
+        floatingTexts.push({
+          x: t.x,
+          y: t.y,
+          text: `+${t.points}`,
+          alpha: 1.0,
+          vy: -1.5,
+          color: t.type === 'can' ? '#38bdf8' : (t.type === 'churru' ? '#fb7185' : '#fbbf24')
+        });
+
         treats.splice(i, 1);
         score += (t.points || 200);
         fishesCollected++;
-        audio.playMeow();
         continue;
       }
 
@@ -682,10 +754,19 @@
         cat.y < floatY + f.height &&
         cat.y + cat.height > floatY
       ) {
+        audio.playCrunchSound();
+        floatingTexts.push({
+          x: f.x,
+          y: floatY,
+          text: `+150`,
+          alpha: 1.0,
+          vy: -1.5,
+          color: '#f97316'
+        });
+
         fishes.splice(i, 1);
         score += 150;
         fishesCollected++;
-        audio.playMeow();
         continue;
       }
 
@@ -729,6 +810,24 @@
       }
 
       if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+    }
+
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+      const ft = floatingTexts[i];
+      if (!gameOver) {
+        ft.y += ft.vy;
+        ft.alpha -= 0.025;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.alpha);
+      ctx.fillStyle = ft.color || '#fde047';
+      ctx.font = 'bold 16px Courier New';
+      ctx.textAlign = 'center';
+      ctx.fillText(ft.text, ft.x + 10, ft.y);
+      ctx.restore();
+
+      if (ft.alpha <= 0) floatingTexts.splice(i, 1);
     }
 
     ctx.fillStyle = '#451a03';
