@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>우동이 간식탐험</title>
+  <title>우동이 간식탐험 Deluxe</title>
   <style>
     * {
       box-sizing: border-box;
@@ -95,23 +95,21 @@
 
 <div id="game-container">
   <div class="header">
-    <h1>🐱 우동이 간식탐험</h1>
+    <h1>🐱 우동이 간식탐험 Deluxe</h1>
     <button class="audio-btn" id="audioToggle">🔊 음소거</button>
   </div>
   <canvas id="gameCanvas" width="600" height="320"></canvas>
   <button class="touch-jump-btn" id="jumpBtn">🦘 점프! (터치)</button>
-  <div class="controls-hint">🐱 2단 점프 가능! (화면 연속 터치 / 스페이스바 / 버튼)</div>
+  <div class="controls-hint">🐱 체력 3개 / 피버 모드 / 특수 아이템 추가됨!</div>
 </div>
 
 <script>
-  // Web Audio API Synth Engine for Cute 8-bit Sounds & BGM
   class CuteAudioEngine {
     constructor() {
       this.ctx = null;
       this.muted = false;
       this.bgmTimer = null;
       this.bgmIndex = 0;
-      
       this.melody = [
         { note: 523.25, duration: 0.2 },
         { note: 659.25, duration: 0.2 },
@@ -141,17 +139,13 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      
       const startFreq = isDouble ? 500 : 300;
       const endFreq = isDouble ? 1100 : 800;
-      
       osc.type = 'square';
       osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + 0.12);
-      
       gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
@@ -161,7 +155,6 @@
     playCanSound() {
       if (this.muted) return;
       this.init();
-      
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'triangle';
@@ -173,21 +166,6 @@
       gain.connect(this.ctx.destination);
       osc.start();
       osc.stop(this.ctx.currentTime + 0.04);
-
-      const bufferSize = this.ctx.sampleRate * 0.1;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = Math.random() * 2 - 1;
-      }
-      const noise = this.ctx.createBufferSource();
-      noise.buffer = buffer;
-      const noiseGain = this.ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.15, this.ctx.currentTime + 0.02);
-      noiseGain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-      noise.connect(noiseGain);
-      noiseGain.connect(this.ctx.destination);
-      noise.start(this.ctx.currentTime + 0.02);
     }
 
     playChurruSound() {
@@ -198,11 +176,8 @@
       osc.type = 'sine';
       osc.frequency.setValueAtTime(450, this.ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(900, this.ctx.currentTime + 0.08);
-      osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.18);
-      
       gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
-      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
@@ -228,19 +203,48 @@
       noise.start();
     }
 
+    playFeverSound() {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(1200, this.ctx.currentTime + 0.3);
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.3);
+    }
+
+    playHitSound() {
+      if (this.muted) return;
+      this.init();
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(60, this.ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.2);
+    }
+
     playGameOver() {
       if (this.muted) return;
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(400, this.ctx.currentTime);
       osc.frequency.linearRampToValueAtTime(120, this.ctx.currentTime + 0.4);
-      
       gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start();
@@ -260,22 +264,16 @@
       }
       this.init();
       const item = this.melody[this.bgmIndex];
-      
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      
       osc.type = 'triangle';
       osc.frequency.setValueAtTime(item.note, this.ctx.currentTime);
-      
       gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
       gain.gain.linearRampToValueAtTime(0.005, this.ctx.currentTime + item.duration * 0.9);
-      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      
       osc.start();
       osc.stop(this.ctx.currentTime + item.duration * 0.9);
-      
       this.bgmIndex = (this.bgmIndex + 1) % this.melody.length;
       this.bgmTimer = setTimeout(() => this.playNextBGMNote(), item.duration * 1000);
     }
@@ -299,9 +297,22 @@
   let gameStarted = false;
   let frame = 0;
 
+  let hp = 3;
+  let maxHp = 3;
+  let invincibleTimer = 0;
+  let hasShield = false;
+  let feverGauge = 0;
+  let isFever = false;
+  let feverTimer = 0;
+  let comboCount = 0;
+  let comboTimer = 0;
+  let magnetTimer = 0;
+  let catnipTimer = 0;
+  let sprayTimer = 0;
+
   const cat = {
     x: 70,
-    y: 210,
+    y: 208,
     width: 48,
     height: 34,
     dy: 0,
@@ -315,54 +326,69 @@
     draw() {
       ctx.save();
       
+      if (invincibleTimer > 0 && Math.floor(frame / 4) % 2 === 0) {
+        ctx.globalAlpha = 0.5;
+      }
+
+      const drawScale = isFever ? 1.6 : 1.0;
+      const curWidth = this.width * drawScale;
+      const curHeight = this.height * drawScale;
+      const curY = this.y - (curHeight - this.height);
+
       ctx.fillStyle = 'rgba(0,0,0,0.15)';
       ctx.beginPath();
-      ctx.ellipse(this.x + 22, 242, 20, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(this.x + 22 * drawScale, 242, 20 * drawScale, 5 * drawScale, 0, 0, Math.PI * 2);
       ctx.fill();
 
+      if (isFever) {
+        ctx.fillStyle = `hsl(${(frame * 10) % 360}, 100%, 70%)`;
+        ctx.beginPath();
+        ctx.arc(this.x + curWidth/2, curY + curHeight/2, curWidth * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.fillStyle = '#7a5e4b';
-      ctx.fillRect(this.x + 4, this.y + 8, 36, 22);
+      ctx.fillRect(this.x + 4 * drawScale, curY + 8 * drawScale, 36 * drawScale, 22 * drawScale);
 
       ctx.fillStyle = '#3d2e24';
-      ctx.fillRect(this.x + 12, this.y + 10, 4, 16);
-      ctx.fillRect(this.x + 20, this.y + 10, 4, 16);
-      ctx.fillRect(this.x + 28, this.y + 10, 4, 16);
+      ctx.fillRect(this.x + 12 * drawScale, curY + 10 * drawScale, 4 * drawScale, 16 * drawScale);
+      ctx.fillRect(this.x + 20 * drawScale, curY + 10 * drawScale, 4 * drawScale, 16 * drawScale);
+      ctx.fillRect(this.x + 28 * drawScale, curY + 10 * drawScale, 4 * drawScale, 16 * drawScale);
 
       ctx.fillStyle = '#7a5e4b';
-      ctx.fillRect(this.x + 28, this.y - 6, 20, 20);
+      ctx.fillRect(this.x + 28 * drawScale, curY - 6 * drawScale, 20 * drawScale, 20 * drawScale);
 
       ctx.fillStyle = '#9e806c';
-      ctx.fillRect(this.x + 38, this.y + 6, 10, 8);
+      ctx.fillRect(this.x + 38 * drawScale, curY + 6 * drawScale, 10 * drawScale, 8 * drawScale);
 
       ctx.fillStyle = '#3d2e24';
-      ctx.fillRect(this.x + 30, this.y - 14, 6, 8);
-      ctx.fillRect(this.x + 40, this.y - 14, 6, 8);
-      ctx.fillStyle = '#fca5a5';
-      ctx.fillRect(this.x + 32, this.y - 12, 3, 5);
-      ctx.fillRect(this.x + 42, this.y - 12, 3, 5);
+      ctx.fillRect(this.x + 30 * drawScale, curY - 14 * drawScale, 6 * drawScale, 8 * drawScale);
+      ctx.fillRect(this.x + 40 * drawScale, curY - 14 * drawScale, 6 * drawScale, 8 * drawScale);
 
       ctx.fillStyle = '#10b981';
-      ctx.fillRect(this.x + 40, this.y, 5, 5);
-      ctx.fillStyle = '#042f2e';
-      ctx.fillRect(this.x + 42, this.y + 1, 2, 3);
-
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(this.x + 46, this.y + 8, 6, 1);
-      ctx.fillRect(this.x + 46, this.y + 11, 6, 1);
+      ctx.fillRect(this.x + 40 * drawScale, curY, 5 * drawScale, 5 * drawScale);
 
       ctx.fillStyle = '#3d2e24';
       const tailAnim = Math.sin(frame * 0.25) * 5;
-      ctx.fillRect(this.x - 8, this.y + 6 + tailAnim, 12, 5);
+      ctx.fillRect(this.x - 8 * drawScale, curY + 6 * drawScale + tailAnim, 12 * drawScale, 5 * drawScale);
 
       ctx.fillStyle = '#3d2e24';
       if (this.isGrounded) {
         this.legFrame = (this.legFrame + 0.3) % 4;
         const offset = Math.sin(this.legFrame) * 4;
-        ctx.fillRect(this.x + 8 + offset, this.y + 30, 6, 6);
-        ctx.fillRect(this.x + 28 - offset, this.y + 30, 6, 6);
+        ctx.fillRect(this.x + 8 * drawScale + offset, curY + 30 * drawScale, 6 * drawScale, 6 * drawScale);
+        ctx.fillRect(this.x + 28 * drawScale - offset, curY + 30 * drawScale, 6 * drawScale, 6 * drawScale);
       } else {
-        ctx.fillRect(this.x + 4, this.y + 28, 8, 5);
-        ctx.fillRect(this.x + 32, this.y + 28, 8, 5);
+        ctx.fillRect(this.x + 4 * drawScale, curY + 28 * drawScale, 8 * drawScale, 5 * drawScale);
+        ctx.fillRect(this.x + 32 * drawScale, curY + 28 * drawScale, 8 * drawScale, 5 * drawScale);
+      }
+
+      if (hasShield) {
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x + curWidth/2, curY + curHeight/2, curWidth * 0.65, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -370,7 +396,8 @@
 
     jump() {
       if (this.jumpCount < this.maxJumps) {
-        this.dy = this.jumpPower;
+        const curPower = catnipTimer > 0 ? this.jumpPower * 1.15 : this.jumpPower;
+        this.dy = curPower;
         this.isGrounded = false;
         this.jumpCount++;
         audio.playJump(this.jumpCount === 2);
@@ -378,7 +405,8 @@
     },
 
     update() {
-      this.dy += this.gravity;
+      const curGravity = catnipTimer > 0 ? 0.35 : this.gravity;
+      this.dy += curGravity;
       this.y += this.dy;
 
       if (this.y >= 208) {
@@ -393,9 +421,11 @@
 
   const obstacles = [];
   const fishes = [];
+  const items = [];
   const floatingTexts = [];
   let obstacleTimer = 0;
   let fishTimer = 0;
+  let itemTimer = 0;
 
   function createObstacle() {
     const types = ['ball', 'box', 'tall_box'];
@@ -429,6 +459,19 @@
     });
   }
 
+  function createSpecialItem() {
+    const itemTypes = ['shield', 'catnip', 'magnet', 'spray'];
+    const type = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+    items.push({
+      x: canvas.width,
+      y: 120 + Math.random() * 60,
+      width: 22,
+      height: 22,
+      type: type,
+      speed: 4.0
+    });
+  }
+
   function handleInput() {
     audio.startBGM();
     if (!gameStarted) {
@@ -459,11 +502,6 @@
     handleInput();
   });
 
-  document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    handleInput();
-  }, { passive: false });
-
   document.getElementById('jumpBtn').addEventListener('click', (e) => {
     handleInput();
   });
@@ -482,6 +520,16 @@
   function spawnHuman() {
     if (activeHuman || !gameStarted || gameOver) return;
     const type = humanTypes[Math.floor(Math.random() * humanTypes.length)];
+    const types = ['can', 'churru', 'biscuit'];
+    const snackPool = [];
+    for (let i = 0; i < type.count; i++) {
+      snackPool.push(types[i % types.length]);
+    }
+    for (let i = snackPool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [snackPool[i], snackPool[j]] = [snackPool[j], snackPool[i]];
+    }
+
     activeHuman = {
       ...type,
       x: canvas.width + 30,
@@ -489,16 +537,15 @@
       targetX: canvas.width - 90,
       state: 'entering',
       timer: 0,
-      thrownCount: 0
+      thrownCount: 0,
+      snackPool: snackPool
     };
   }
 
   function drawHuman(h) {
     ctx.save();
-
     ctx.fillStyle = h.color;
     ctx.fillRect(h.x + 6, h.y + 24, 20, 28);
-
     ctx.fillStyle = '#fde047';
     ctx.fillRect(h.x + 8, h.y + 6, 16, 18);
 
@@ -522,42 +569,29 @@
       ctx.fillRect(h.x + 24, h.y + 22, 7, 3);
     }
 
-    if (h.glasses) {
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(h.x + 10, h.y + 12, 5, 5);
-      ctx.fillRect(h.x + 17, h.y + 12, 5, 5);
-      ctx.fillRect(h.x + 15, h.y + 14, 2, 1);
-    } else {
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(h.x + 11, h.y + 13, 3, 3);
-      ctx.fillRect(h.x + 18, h.y + 13, 3, 3);
-    }
+    ctx.fillStyle = h.glasses ? '#1e293b' : '#000000';
+    ctx.fillRect(h.x + 11, h.y + 13, 3, 3);
+    ctx.fillRect(h.x + 18, h.y + 13, 3, 3);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px Courier New';
     ctx.textAlign = 'center';
     ctx.fillText(h.name, h.x + 16, h.y - 6);
-
     ctx.restore();
   }
 
   function updateHuman() {
     if (!activeHuman) return;
-
     const h = activeHuman;
 
     if (h.state === 'entering') {
       h.x -= 3;
-      if (h.x <= h.targetX) {
-        h.state = 'throwing';
-      }
+      if (h.x <= h.targetX) h.state = 'throwing';
     } else if (h.state === 'throwing') {
       h.timer++;
       if (h.timer % 12 === 0 && h.thrownCount < h.count) {
-        const snackTypes = ['can', 'churru', 'biscuit'];
-        const type = snackTypes[Math.floor(Math.random() * snackTypes.length)];
-        let pts = 200;
-        let w = 20, hHeight = 18;
+        const type = h.snackPool[h.thrownCount] || 'biscuit';
+        let pts = 200, w = 20, hHeight = 18;
 
         if (type === 'can') { pts = 300; w = 20; hHeight = 18; }
         else if (type === 'churru') { pts = 250; w = 24; hHeight = 10; }
@@ -581,37 +615,102 @@
       }
     } else if (h.state === 'leaving') {
       h.x += 4;
-      if (h.x > canvas.width + 50) {
-        activeHuman = null;
+      if (h.x > canvas.width + 50) activeHuman = null;
+    }
+    drawHuman(h);
+  }
+
+  function addScoreAndCombo(pts, color, x, y) {
+    comboCount++;
+    comboTimer = 120;
+    const comboBonus = Math.floor(pts * (1 + comboCount * 0.1));
+    score += comboBonus;
+
+    if (!isFever) {
+      feverGauge += 12;
+      if (feverGauge >= 100) {
+        feverGauge = 100;
+        isFever = true;
+        feverTimer = 360;
+        audio.playFeverSound();
+        floatingTexts.push({
+          x: canvas.width / 2,
+          y: 100,
+          text: '🔥 FEVER TIME! 🔥',
+          alpha: 1.0,
+          vy: -1,
+          color: '#ef4444'
+        });
       }
     }
 
-    drawHuman(h);
+    floatingTexts.push({
+      x: x,
+      y: y,
+      text: comboCount > 1 ? `+${comboBonus} (${comboCount}COMBO)` : `+${pts}`,
+      alpha: 1.0,
+      vy: -1.5,
+      color: color
+    });
   }
 
   function restartGame() {
     activeHuman = null;
     nextHumanScore = 3000;
     treats.length = 0;
+    obstacles.length = 0;
+    fishes.length = 0;
+    items.length = 0;
     floatingTexts.length = 0;
     cat.y = 208;
     cat.dy = 0;
-    obstacles.length = 0;
-    fishes.length = 0;
     score = 0;
     fishesCollected = 0;
+    hp = maxHp;
+    invincibleTimer = 0;
+    hasShield = false;
+    feverGauge = 0;
+    isFever = false;
+    feverTimer = 0;
+    comboCount = 0;
+    comboTimer = 0;
+    magnetTimer = 0;
+    catnipTimer = 0;
+    sprayTimer = 0;
     gameOver = false;
     obstacleTimer = 0;
     fishTimer = 0;
+    itemTimer = 0;
   }
 
   function gameLoop() {
     frame++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    if (invincibleTimer > 0) invincibleTimer--;
+    if (comboTimer > 0) comboTimer--; else comboCount = 0;
+    if (magnetTimer > 0) magnetTimer--;
+    if (catnipTimer > 0) catnipTimer--;
+    if (sprayTimer > 0) sprayTimer--;
+
+    if (isFever) {
+      feverTimer--;
+      feverGauge = (feverTimer / 360) * 100;
+      if (feverTimer <= 0) {
+        isFever = false;
+        feverGauge = 0;
+      }
+    }
+
     const skyGradient = ctx.createLinearGradient(0, 0, 0, 240);
-    skyGradient.addColorStop(0, '#fef3c7');
-    skyGradient.addColorStop(1, '#fde68a');
+    if (isFever) {
+      skyGradient.addColorStop(0, '#f43f5e');
+      skyGradient.addColorStop(0.5, '#fbbf24');
+      skyGradient.addColorStop(1, '#3b82f6');
+    } else {
+      skyGradient.addColorStop(0, '#fef3c7');
+      skyGradient.addColorStop(1, '#fde68a');
+    }
     ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, canvas.width, 240);
 
@@ -632,7 +731,7 @@
       ctx.fillStyle = '#451a03';
       ctx.font = 'bold 22px Courier New';
       ctx.textAlign = 'center';
-      ctx.fillText('🐱 터치하거나 버튼을 눌러 시작!', canvas.width / 2, 120);
+      ctx.fillText('🐱 터치/버튼으로 시작!', canvas.width / 2, 120);
       ctx.font = '14px Courier New';
       ctx.fillText(`최고 기록: ${highScore}점`, canvas.width / 2, 150);
       requestAnimationFrame(gameLoop);
@@ -656,9 +755,72 @@
 
     updateHuman();
 
+    itemTimer++;
+    if (itemTimer > 250 + Math.random() * 200) {
+      createSpecialItem();
+      itemTimer = 0;
+    }
+
+    for (let i = items.length - 1; i >= 0; i--) {
+      const it = items[i];
+      if (!gameOver) it.x -= it.speed;
+
+      ctx.save();
+      if (it.type === 'shield') ctx.fillStyle = '#0ea5e9';
+      else if (it.type === 'catnip') ctx.fillStyle = '#10b981';
+      else if (it.type === 'magnet') ctx.fillStyle = '#a855f7';
+      else if (it.type === 'spray') ctx.fillStyle = '#f97316';
+      
+      ctx.beginPath();
+      ctx.arc(it.x + 11, it.y + 11, 11, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'center';
+      let icon = 'S';
+      if (it.type === 'catnip') icon = 'N';
+      if (it.type === 'magnet') icon = 'M';
+      if (it.type === 'spray') icon = 'W';
+      ctx.fillText(icon, it.x + 11, it.y + 15);
+      ctx.restore();
+
+      if (
+        cat.x < it.x + it.width &&
+        cat.x + cat.width > it.x &&
+        cat.y < it.y + it.height &&
+        cat.y + cat.height > it.y
+      ) {
+        audio.playCrunchSound();
+        if (it.type === 'shield') {
+          hasShield = true;
+          floatingTexts.push({ x: it.x, y: it.y, text: 'SHIELD ON!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
+        } else if (it.type === 'catnip') {
+          catnipTimer = 300;
+          floatingTexts.push({ x: it.x, y: it.y, text: 'CATNIP JUMP!', alpha: 1.0, vy: -1.5, color: '#34d399' });
+        } else if (it.type === 'magnet') {
+          magnetTimer = 300;
+          floatingTexts.push({ x: it.x, y: it.y, text: 'MAGNET!', alpha: 1.0, vy: -1.5, color: '#c084fc' });
+        } else if (it.type === 'spray') {
+          sprayTimer = 180;
+          floatingTexts.push({ x: it.x, y: it.y, text: 'WATER SPRAY!', alpha: 1.0, vy: -1.5, color: '#f97316' });
+        }
+        items.splice(i, 1);
+      }
+    }
+
     for (let i = treats.length - 1; i >= 0; i--) {
       const t = treats[i];
       if (!gameOver) {
+        if (magnetTimer > 0) {
+          const dx = (cat.x + cat.width/2) - (t.x + t.width/2);
+          const dy = (cat.y + cat.height/2) - (t.y + t.height/2);
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 180) {
+            t.x += (dx / dist) * 6;
+            t.y += (dy / dist) * 6;
+          }
+        }
         t.x += t.vx;
         t.y += t.vy;
         t.vy += t.gravity;
@@ -676,20 +838,12 @@
         ctx.fillRect(t.x, t.y + 3, t.width, t.height - 3);
         ctx.fillStyle = '#e2e8f0';
         ctx.fillRect(t.x, t.y, t.width, 3);
-        ctx.fillRect(t.x + 6, t.y - 2, 8, 2);
       } else if (t.type === 'churru') {
         ctx.fillStyle = '#f43f5e';
         ctx.fillRect(t.x, t.y, t.width, t.height);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(t.x + 4, t.y + 2, 2, t.height - 4);
-        ctx.fillStyle = '#fde047';
-        ctx.fillRect(t.x + t.width - 4, t.y, 4, t.height);
       } else {
         ctx.fillStyle = '#d97706';
         ctx.fillRect(t.x, t.y + 2, 14, 10);
-        ctx.fillRect(t.x + 14, t.y, 6, 14);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(t.x + 3, t.y + 4, 3, 3);
       }
       ctx.restore();
 
@@ -699,29 +853,15 @@
         cat.y < t.y + t.height &&
         cat.y + cat.height > t.y
       ) {
-        if (t.type === 'can') {
-          audio.playCanSound();
-        } else if (t.type === 'churru') {
-          audio.playChurruSound();
-        } else {
-          audio.playCrunchSound();
-        }
+        if (t.type === 'can') audio.playCanSound();
+        else if (t.type === 'churru') audio.playChurruSound();
+        else audio.playCrunchSound();
 
-        floatingTexts.push({
-          x: t.x,
-          y: t.y,
-          text: `+${t.points}`,
-          alpha: 1.0,
-          vy: -1.5,
-          color: t.type === 'can' ? '#38bdf8' : (t.type === 'churru' ? '#fb7185' : '#fbbf24')
-        });
-
+        addScoreAndCombo(t.points || 200, t.type === 'can' ? '#38bdf8' : (t.type === 'churru' ? '#fb7185' : '#fbbf24'), t.x, t.y);
         treats.splice(i, 1);
-        score += (t.points || 200);
         fishesCollected++;
         continue;
       }
-
       if (t.x + t.width < 0) treats.splice(i, 1);
     }
 
@@ -744,9 +884,6 @@
       const floatY = f.y + Math.sin(frame * 0.1 + f.bob) * 4;
       ctx.fillStyle = '#f97316';
       ctx.fillRect(f.x, floatY, 14, 10);
-      ctx.fillRect(f.x + 14, floatY - 3, 6, 16);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(f.x + 3, floatY + 2, 3, 3);
 
       if (
         cat.x < f.x + f.width &&
@@ -755,21 +892,11 @@
         cat.y + cat.height > floatY
       ) {
         audio.playCrunchSound();
-        floatingTexts.push({
-          x: f.x,
-          y: floatY,
-          text: `+150`,
-          alpha: 1.0,
-          vy: -1.5,
-          color: '#f97316'
-        });
-
+        addScoreAndCombo(150, '#f97316', f.x, floatY);
         fishes.splice(i, 1);
-        score += 150;
         fishesCollected++;
         continue;
       }
-
       if (f.x + f.width < 0) fishes.splice(i, 1);
     }
 
@@ -777,25 +904,8 @@
       const obs = obstacles[i];
       if (!gameOver) obs.x -= obs.speed;
 
-      if (obs.type === 'ball') {
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(obs.x + 12, obs.y + 12, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#b91c1c';
-        ctx.fillRect(obs.x + 4, obs.y + 8, 16, 4);
-      } else if (obs.type === 'tall_box') {
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
-        ctx.fillRect(obs.x + 2, obs.y + 22, obs.width - 4, 4);
-      } else {
-        ctx.fillStyle = '#d97706';
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(obs.x + 2, obs.y + 2, obs.width - 4, 4);
-      }
+      ctx.fillStyle = obs.type === 'ball' ? '#ef4444' : '#b45309';
+      ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
 
       if (
         cat.x + 6 < obs.x + obs.width &&
@@ -803,54 +913,91 @@
         cat.y + 6 < obs.y + obs.height &&
         cat.y + cat.height > obs.y
       ) {
-        if (!gameOver) {
-          gameOver = true;
-          audio.playGameOver();
+        if (isFever) {
+          audio.playCrunchSound();
+          floatingTexts.push({ x: obs.x, y: obs.y, text: '+500 DESTROY!', alpha: 1.0, vy: -1.5, color: '#ef4444' });
+          score += 500;
+          obstacles.splice(i, 1);
+          continue;
+        }
+
+        if (invincibleTimer <= 0) {
+          if (hasShield) {
+            hasShield = false;
+            invincibleTimer = 45;
+            audio.playHitSound();
+            floatingTexts.push({ x: cat.x, y: cat.y, text: 'SHIELD BLOCK!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
+          } else {
+            hp--;
+            invincibleTimer = 60;
+            audio.playHitSound();
+            floatingTexts.push({ x: cat.x, y: cat.y, text: 'OUCH!', alpha: 1.0, vy: -1.5, color: '#ef4444' });
+
+            if (hp <= 0 && !gameOver) {
+              gameOver = true;
+              audio.playGameOver();
+            }
+          }
         }
       }
-
       if (obs.x + obs.width < 0) obstacles.splice(i, 1);
+    }
+
+    if (sprayTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.beginPath();
+      ctx.arc(150, 100, 70, 0, Math.PI * 2);
+      ctx.arc(420, 180, 90, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
       const ft = floatingTexts[i];
       if (!gameOver) {
         ft.y += ft.vy;
-        ft.alpha -= 0.025;
+        ft.alpha -= 0.02;
       }
-
       ctx.save();
       ctx.globalAlpha = Math.max(0, ft.alpha);
       ctx.fillStyle = ft.color || '#fde047';
       ctx.font = 'bold 16px Courier New';
       ctx.textAlign = 'center';
-      ctx.fillText(ft.text, ft.x + 10, ft.y);
+      ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
-
       if (ft.alpha <= 0) floatingTexts.splice(i, 1);
     }
 
     ctx.fillStyle = '#451a03';
-    ctx.font = 'bold 16px Courier New';
+    ctx.font = 'bold 15px Courier New';
     ctx.textAlign = 'left';
-    ctx.fillText(`SCORE: ${score}`, 15, 28);
-    ctx.fillText(`🐟 x ${fishesCollected}`, 150, 28);
-    ctx.textAlign = 'right';
-    ctx.fillText(`BEST: ${highScore}`, canvas.width - 15, 28);
+    ctx.fillText(`SCORE: ${score}`, 15, 25);
+    ctx.fillText(`BEST: ${highScore}`, 150, 25);
+
+    let heartsText = '';
+    for (let h = 0; h < maxHp; h++) {
+      heartsText += h < hp ? '❤️' : '🖤';
+    }
+    ctx.fillText(heartsText, canvas.width - 90, 25);
+
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(15, 33, 120, 8);
+    ctx.fillStyle = isFever ? '#ef4444' : '#eab308';
+    ctx.fillRect(15, 33, (feverGauge / 100) * 120, 8);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(15, 33, 120, 8);
 
     if (gameOver) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.font = 'bold 26px Courier New';
       ctx.fillText('GAME OVER', canvas.width / 2, 110);
-      
       ctx.font = '16px Courier New';
       ctx.fillStyle = '#fde047';
       ctx.fillText(`최종 점수: ${score}점 (간식 ${fishesCollected}개)`, canvas.width / 2, 150);
-      
       ctx.fillStyle = '#ffffff';
       ctx.font = '14px Courier New';
       ctx.fillText('화면을 터치하여 다시 시작', canvas.width / 2, 190);
