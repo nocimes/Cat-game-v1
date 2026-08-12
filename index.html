@@ -67,12 +67,13 @@
     }
     .controls-hint {
       margin-top: 10px;
-      font-size: 13px;
+      font-size: 12px;
       color: #aaa;
       text-align: center;
+      line-height: 1.4;
     }
     .touch-jump-btn {
-      margin-top: 15px;
+      margin-top: 12px;
       width: 90%;
       padding: 15px;
       background: linear-gradient(180deg, #ff9f43, #ee5253);
@@ -95,12 +96,14 @@
 
 <div id="game-container">
   <div class="header">
-    <h1>🐱 우동이 간식탐험 Stage Deluxe</h1>
+    <h1>🐱 우동이 간식탐험 Deluxe</h1>
     <button class="audio-btn" id="audioToggle">🔊 음소거</button>
   </div>
   <canvas id="gameCanvas" width="600" height="320"></canvas>
   <button class="touch-jump-btn" id="jumpBtn">🦘 점프! (터치)</button>
-  <div class="controls-hint">🐱 체력 3개 / 무한 루프 스테이지 / 보스전 & 사운드 추가!</div>
+  <div class="controls-hint">
+    🛡️방어막 | 🌿캣잎(저중력 점프) | 🧲자석(간식흡수) | 💦물뿌리개(시야방해)
+  </div>
 </div>
 
 <script>
@@ -148,15 +151,19 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
       osc.type = 'square';
-      osc.frequency.setValueAtTime(isDouble ? 500 : 300, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(isDouble ? 1100 : 800, this.ctx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(isDouble ? 500 : 300, now);
+      osc.frequency.exponentialRampToValueAtTime(isDouble ? 1100 : 800, now + 0.12);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
     }
 
     playSnackThrow() {
@@ -164,31 +171,19 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(700, now);
+      osc.frequency.exponentialRampToValueAtTime(300, now + 0.08);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.08);
-    }
-
-    playObstacleThrow() {
-      if (this.muted) return;
-      this.init();
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(250, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.08);
     }
 
     playCanSound() {
@@ -196,15 +191,19 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1400, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(350, this.ctx.currentTime + 0.04);
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(350, now + 0.05);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.04);
+      osc.start(now);
+      osc.stop(now + 0.05);
     }
 
     playCrunchSound() {
@@ -219,11 +218,15 @@
       const noise = this.ctx.createBufferSource();
       noise.buffer = buffer;
       const gain = this.ctx.createGain();
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.07);
+      const now = this.ctx.currentTime;
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+      
       noise.connect(gain);
       gain.connect(this.ctx.destination);
-      noise.start();
+      noise.start(now);
     }
 
     playHitSound() {
@@ -231,15 +234,19 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
       osc.type = 'square';
-      osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(60, this.ctx.currentTime + 0.2);
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.linearRampToValueAtTime(60, now + 0.2);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.2);
+      osc.start(now);
+      osc.stop(now + 0.2);
     }
 
     playGameOver() {
@@ -247,15 +254,19 @@
       this.init();
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(400, this.ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(120, this.ctx.currentTime + 0.4);
-      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.linearRampToValueAtTime(120, now + 0.4);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + 0.4);
+      osc.start(now);
+      osc.stop(now + 0.4);
     }
 
     setBossMode(bossOn) {
@@ -279,14 +290,20 @@
       const item = melody[this.bgmIndex % melody.length];
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
+      
       osc.type = this.isBossBGM ? 'sawtooth' : 'triangle';
-      osc.frequency.setValueAtTime(item.note, this.ctx.currentTime);
-      gain.gain.setValueAtTime(this.isBossBGM ? 0.08 : 0.05, this.ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.005, this.ctx.currentTime + item.duration * 0.9);
+      osc.frequency.setValueAtTime(item.note, now);
+      
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(this.isBossBGM ? 0.06 : 0.04, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.005, now + item.duration * 0.9);
+      
       osc.connect(gain);
       gain.connect(this.ctx.destination);
-      osc.start();
-      osc.stop(this.ctx.currentTime + item.duration * 0.9);
+      osc.start(now);
+      osc.stop(now + item.duration * 0.9);
+      
       this.bgmIndex = (this.bgmIndex + 1) % melody.length;
       this.bgmTimer = setTimeout(() => this.playNextBGMNote(), item.duration * 1000);
     }
@@ -313,8 +330,8 @@
   let loopCount = 1;
   let stageCount = 1;
   let stageFrameTimer = 0;
-  const STAGE_DURATION = 120 * 60; // 2분 = 120초 = 7200 프레임
-  const BOSS_SPAWN_FRAME = 90 * 60; // 1분 30초에 보스 등장
+  const STAGE_DURATION = 90 * 60; // 스테이지 전체 길이
+  const BOSS_SPAWN_FRAME = 60 * 60; // 1분 = 60초 = 3600 프레임 후 보스 출현
   let bossActive = false;
   let bossDefeated = false;
 
@@ -448,14 +465,12 @@
   let itemTimer = 0;
 
   function getCurrentSpeed() {
-    // 이전 8000점 속도(약 7.5~8.0)를 상한선으로 고정
     const stageProgress = stageFrameTimer / STAGE_DURATION;
     const baseSpeed = 4.8 + (loopCount - 1) * 0.4 + (stageCount - 1) * 0.3 + stageProgress * 0.6;
     return Math.min(baseSpeed, 8.0);
   }
 
   function createObstacle() {
-    audio.playObstacleThrow();
     const types = ['ball', 'box', 'tall_box'];
     const type = types[Math.floor(Math.random() * types.length)];
     let h = 26;
@@ -489,8 +504,8 @@
     items.push({
       x: canvas.width,
       y: 120 + Math.random() * 60,
-      width: 22,
-      height: 22,
+      width: 24,
+      height: 24,
       type: type,
       speed: getCurrentSpeed() - 1.0
     });
@@ -566,7 +581,7 @@
     floatingTexts.push({
       x: canvas.width / 2,
       y: 100,
-      text: `⚠️ WARNING! BOSS ${def.name} ⚠️`,
+      text: `⚠️ 보스 ${def.name} 등장! (1분 경과) ⚠️`,
       alpha: 1.0,
       vy: -0.5,
       color: '#ef4444'
@@ -754,28 +769,43 @@
       itemTimer = 0;
     }
 
+    // 아이템 습득 및 아이템 아이콘 그리기
     for (let i = items.length - 1; i >= 0; i--) {
       const it = items[i];
       if (!gameOver) it.x -= it.speed;
 
       ctx.save();
-      ctx.fillStyle = it.type === 'shield' ? '#0ea5e9' : (it.type === 'catnip' ? '#10b981' : (it.type === 'magnet' ? '#a855f7' : '#f97316'));
+      let itemBg = '#0ea5e9';
+      let itemSymbol = '🛡️';
+      if (it.type === 'catnip') { itemBg = '#10b981'; itemSymbol = '🌿'; }
+      if (it.type === 'magnet') { itemBg = '#a855f7'; itemSymbol = '🧲'; }
+      if (it.type === 'spray') { itemBg = '#f97316'; itemSymbol = '💦'; }
+
+      ctx.fillStyle = itemBg;
       ctx.beginPath();
-      ctx.arc(it.x + 11, it.y + 11, 11, 0, Math.PI * 2);
+      ctx.arc(it.x + 12, it.y + 12, 12, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px Courier New';
+      ctx.font = '12px Segoe UI Emoji, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(it.type[0].toUpperCase(), it.x + 11, it.y + 15);
+      ctx.fillText(itemSymbol, it.x + 12, it.y + 16);
       ctx.restore();
 
       if (cat.x < it.x + it.width && cat.x + cat.width > it.x && cat.y < it.y + it.height && cat.y + cat.height > it.y) {
         audio.playCrunchSound();
-        if (it.type === 'shield') hasShield = true;
-        if (it.type === 'catnip') catnipTimer = 300;
-        if (it.type === 'magnet') magnetTimer = 300;
-        if (it.type === 'spray') sprayTimer = 180;
+        if (it.type === 'shield') {
+          hasShield = true;
+          floatingTexts.push({ x: it.x, y: it.y, text: '🛡️ 방어막! (충돌 1회 방어)', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
+        } else if (it.type === 'catnip') {
+          catnipTimer = 360;
+          floatingTexts.push({ x: it.x, y: it.y, text: '🌿 캣잎! (저중력 높은점프)', alpha: 1.0, vy: -1.5, color: '#34d399' });
+        } else if (it.type === 'magnet') {
+          magnetTimer = 360;
+          floatingTexts.push({ x: it.x, y: it.y, text: '🧲 자석! (간식 자동흡수)', alpha: 1.0, vy: -1.5, color: '#c084fc' });
+        } else if (it.type === 'spray') {
+          sprayTimer = 180;
+          floatingTexts.push({ x: it.x, y: it.y, text: '💦 물뿌리개! (시야 방해)', alpha: 1.0, vy: -1.5, color: '#f97316' });
+        }
         items.splice(i, 1);
       }
     }
@@ -787,7 +817,7 @@
           const dx = (cat.x + cat.width/2) - (t.x + t.width/2);
           const dy = (cat.y + cat.height/2) - (t.y + t.height/2);
           const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 180) { t.x += (dx / dist) * 6; t.y += (dy / dist) * 6; }
+          if (dist < 200) { t.x += (dx / dist) * 7; t.y += (dy / dist) * 7; }
         }
         t.x += t.vx;
         t.y += t.vy;
@@ -808,7 +838,6 @@
       if (t.x + t.width < 0) treats.splice(i, 1);
     }
 
-    // 장애물 생성 (회차/스테이지 밀도 조절)
     const obstacleSpawnInterval = Math.max(32, 60 - (loopCount * 4) - (stageCount * 2));
     obstacleTimer++;
     if (obstacleTimer > obstacleSpawnInterval + Math.random() * 25) {
@@ -859,6 +888,7 @@
             hasShield = false;
             invincibleTimer = 45;
             audio.playHitSound();
+            floatingTexts.push({ x: cat.x, y: cat.y, text: '🛡️ 방어막 파괴!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
           } else {
             hp--;
             invincibleTimer = 60;
@@ -873,29 +903,63 @@
       if (obs.x + obs.width < 0) obstacles.splice(i, 1);
     }
 
+    // 디버프(물뿌리개) 시야 가림 연출
+    if (sprayTimer > 0) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.beginPath();
+      ctx.arc(160, 90, 75, 0, Math.PI * 2);
+      ctx.arc(440, 170, 95, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     for (let i = floatingTexts.length - 1; i >= 0; i--) {
       const ft = floatingTexts[i];
       if (!gameOver) { ft.y += ft.vy; ft.alpha -= 0.02; }
       ctx.save();
       ctx.globalAlpha = Math.max(0, ft.alpha);
       ctx.fillStyle = ft.color || '#fde047';
-      ctx.font = 'bold 16px Courier New';
+      ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
       if (ft.alpha <= 0) floatingTexts.splice(i, 1);
     }
 
-    // UI 정보
+    // 상단 HUD UI 정보
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 15px Courier New';
+    ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(`STAGE ${loopCount}-${stageCount} (${theme.name})`, 15, 25);
-    ctx.fillText(`SCORE: ${score}`, 220, 25);
+    ctx.fillText(`SCORE: ${score}`, 210, 25);
 
     let heartsText = '';
     for (let h = 0; h < maxHp; h++) heartsText += h < hp ? '❤️' : '🖤';
-    ctx.fillText(heartsText, canvas.width - 90, 25);
+    ctx.fillText(heartsText, canvas.width - 85, 25);
+
+    // 활성화된 아이템 버프/디버프 상태 실시간 표시
+    ctx.font = 'bold 12px sans-serif';
+    let statusX = 15;
+    if (hasShield) {
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('🛡️방어막', statusX, 48);
+      statusX += 65;
+    }
+    if (catnipTimer > 0) {
+      ctx.fillStyle = '#34d399';
+      ctx.fillText(`🌿점프UP(${Math.ceil(catnipTimer/60)}s)`, statusX, 48);
+      statusX += 95;
+    }
+    if (magnetTimer > 0) {
+      ctx.fillStyle = '#c084fc';
+      ctx.fillText(`🧲자석(${Math.ceil(magnetTimer/60)}s)`, statusX, 48);
+      statusX += 80;
+    }
+    if (sprayTimer > 0) {
+      ctx.fillStyle = '#f97316';
+      ctx.fillText(`💦시야방해(${Math.ceil(sprayTimer/60)}s)`, statusX, 48);
+    }
 
     if (gameOver) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
