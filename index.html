@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>우동이 간식탐험 Deluxe - Stage & Boss</title>
+  <title>우동이 간식탐험 Deluxe - Boss & Visual Upgrade</title>
   <style>
     * {
       box-sizing: border-box;
@@ -12,7 +12,7 @@
       touch-action: manipulation;
     }
     body {
-      background-color: #1a1a24;
+      background-color: #121218;
       color: #fff;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -47,8 +47,8 @@
       text-shadow: 2px 2px #000;
     }
     .audio-btn {
-      background: #444;
-      border: 2px solid #666;
+      background: #333;
+      border: 2px solid #555;
       color: #fff;
       border-radius: 20px;
       padding: 5px 12px;
@@ -58,17 +58,17 @@
     canvas {
       width: 100%;
       height: auto;
-      background-color: #fdf6e3;
-      border: 4px solid #4a3b32;
+      background-color: #222;
+      border: 4px solid #5c4433;
       border-radius: 8px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
     .controls-hint {
       margin-top: 10px;
       font-size: 12px;
-      color: #aaa;
+      color: #bbb;
       text-align: center;
       line-height: 1.4;
     }
@@ -102,7 +102,7 @@
   <canvas id="gameCanvas" width="600" height="320"></canvas>
   <button class="touch-jump-btn" id="jumpBtn">🦘 점프! (터치)</button>
   <div class="controls-hint">
-    🛡️방어막 | 🌿캣잎(저중력 점프) | 🧲자석(간식흡수) | 💦물뿌리개(시야방해)
+    🛡️방어막(10초) | 🌿캣잎(저중력 점프) | 🧲자석(400px 흡수) | 💦물뿌리개(시야방해)
   </div>
 </div>
 
@@ -330,15 +330,15 @@
   let loopCount = 1;
   let stageCount = 1;
   let stageFrameTimer = 0;
-  const STAGE_DURATION = 90 * 60; // 스테이지 전체 길이
-  const BOSS_SPAWN_FRAME = 60 * 60; // 1분 = 60초 = 3600 프레임 후 보스 출현
+  const STAGE_DURATION = 90 * 60; // 스테이지 길
+  const BOSS_SPAWN_FRAME = 60 * 60; // 1분 경과 후 보스 출현
   let bossActive = false;
   let bossDefeated = false;
 
   let hp = 3;
   let maxHp = 3;
   let invincibleTimer = 0;
-  let hasShield = false;
+  let shieldTimer = 0; // 방어막 유지시간 (600프레임 = 10초)
   let feverGauge = 0;
   let isFever = false;
   let feverTimer = 0;
@@ -348,11 +348,12 @@
   let catnipTimer = 0;
   let sprayTimer = 0;
 
+  // 가시성 극대화를 위한 선명한 스테이지 테마
   const stageThemes = [
-    { name: '거실', sky1: '#fef3c7', sky2: '#fde68a', ground: '#78350f' },
-    { name: '골목길', sky1: '#ff8c00', sky2: '#e65100', ground: '#424242' },
-    { name: '공원', sky1: '#4a148c', sky2: '#7b1fa2', ground: '#1b5e20' },
-    { name: '옥상 기지', sky1: '#0d47a1', sky2: '#1a237e', ground: '#212121' }
+    { name: '거실', sky1: '#fff7ed', sky2: '#fed7aa', ground: '#451a03' },
+    { name: '골목길', sky1: '#4c1d95', sky2: '#2e1065', ground: '#111827' },
+    { name: '공원', sky1: '#064e3b', sky2: '#022c22', ground: '#14532d' },
+    { name: '옥상 기지', sky1: '#1e1b4b', sky2: '#0f172a', ground: '#020617' }
   ];
 
   const cat = {
@@ -379,7 +380,7 @@
       const curHeight = this.height * drawScale;
       const curY = this.y - (curHeight - this.height);
 
-      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath();
       ctx.ellipse(this.x + 22 * drawScale, 242, 20 * drawScale, 5 * drawScale, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -421,12 +422,16 @@
         ctx.fillRect(this.x + 32 * drawScale, curY + 28 * drawScale, 8 * drawScale, 5 * drawScale);
       }
 
-      if (hasShield) {
-        ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 3;
+      // 방어막 표시 (선명한 파란 후광 효과)
+      if (shieldTimer > 0) {
+        ctx.strokeStyle = '#00f0ff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.arc(this.x + curWidth/2, curY + curHeight/2, curWidth * 0.65, 0, Math.PI * 2);
+        ctx.arc(this.x + curWidth/2, curY + curHeight/2, curWidth * 0.7, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.shadowBlur = 0;
       }
       ctx.restore();
     },
@@ -473,14 +478,14 @@
   function createObstacle() {
     const types = ['ball', 'box', 'tall_box'];
     const type = types[Math.floor(Math.random() * types.length)];
-    let h = 26;
-    let y = 216;
-    if (type === 'tall_box') { h = 44; y = 198; }
+    let h = 28;
+    let y = 214;
+    if (type === 'tall_box') { h = 46; y = 196; }
 
     obstacles.push({
       x: canvas.width,
       y: y,
-      width: 24,
+      width: 26,
       height: h,
       type: type,
       speed: getCurrentSpeed()
@@ -491,8 +496,8 @@
     fishes.push({
       x: canvas.width,
       y: 130 + Math.random() * 50,
-      width: 20,
-      height: 14,
+      width: 22,
+      height: 16,
       speed: getCurrentSpeed() - 0.5,
       bob: Math.random() * 10
     });
@@ -504,8 +509,8 @@
     items.push({
       x: canvas.width,
       y: 120 + Math.random() * 60,
-      width: 24,
-      height: 24,
+      width: 26,
+      height: 26,
       type: type,
       speed: getCurrentSpeed() - 1.0
     });
@@ -545,11 +550,12 @@
     handleInput();
   });
 
+  // 보스 캐릭터 세부 구성 (4인 캐릭터화)
   const bossDefinitions = [
-    { name: '터보', count: 12, color: '#3b82f6', throwInterval: 24 },
-    { name: '누렁', count: 15, color: '#ec4899', throwInterval: 20 },
-    { name: '유', count: 18, color: '#8b5cf6', throwInterval: 16 },
-    { name: '아', count: 22, color: '#f59e0b', throwInterval: 12 }
+    { name: '터보', type: 'adult_male', color: '#1e40af', outfit: '정장', throwInterval: 22 },
+    { name: '누렁', type: 'adult_female', color: '#be185d', outfit: '긴검은머리', throwInterval: 18 },
+    { name: '유', type: 'girl_long', color: '#6d28d9', outfit: '긴머리소녀', throwInterval: 16 },
+    { name: '아', type: 'girl_pigtails', color: '#b45309', outfit: '양갈래소녀', throwInterval: 12 }
   ];
 
   let currentBoss = null;
@@ -563,15 +569,15 @@
     const def = bossDefinitions[(stageCount - 1) % bossDefinitions.length];
     const types = ['can', 'churru', 'biscuit'];
     const snackPool = [];
-    for (let i = 0; i < def.count + (loopCount - 1) * 3; i++) {
+    for (let i = 0; i < 15 + (loopCount - 1) * 4; i++) {
       snackPool.push(types[i % types.length]);
     }
 
     currentBoss = {
       ...def,
-      x: canvas.width + 30,
-      y: 160,
-      targetX: canvas.width - 90,
+      x: canvas.width + 40,
+      y: 150,
+      targetX: canvas.width - 95,
       state: 'entering',
       timer: 0,
       thrownCount: 0,
@@ -581,11 +587,97 @@
     floatingTexts.push({
       x: canvas.width / 2,
       y: 100,
-      text: `⚠️ 보스 ${def.name} 등장! (1분 경과) ⚠️`,
+      text: `⚠️ 보스 ${def.name} 등장! (10초 유지) ⚠️`,
       alpha: 1.0,
       vy: -0.5,
-      color: '#ef4444'
+      color: '#ff2222'
     });
+  }
+
+  function drawBossCharacter(b) {
+    ctx.save();
+    const bx = b.x;
+    const by = b.y;
+
+    // 검은색 아웃라인 추가로 또렷한 가시성
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#000000';
+
+    if (b.type === 'adult_male') { // 터보: 남자 어른
+      ctx.fillStyle = '#1e3a8a'; // 남색 정장
+      ctx.fillRect(bx + 4, by + 24, 26, 32);
+      ctx.strokeRect(bx + 4, by + 24, 26, 32);
+      
+      ctx.fillStyle = '#fde047'; // 얼굴
+      ctx.fillRect(bx + 7, by + 6, 20, 18);
+      
+      ctx.fillStyle = '#1e1b4b'; // 짧은 검은 머리
+      ctx.fillRect(bx + 5, by + 2, 24, 8);
+      ctx.fillRect(bx + 4, by + 8, 5, 8);
+      
+      ctx.fillStyle = '#000'; // 안경
+      ctx.strokeRect(bx + 10, by + 11, 6, 4);
+      ctx.strokeRect(bx + 18, by + 11, 6, 4);
+    } 
+    else if (b.type === 'adult_female') { // 누렁: 긴검은머리 여자 어른
+      ctx.fillStyle = '#111827'; // 긴 검은 머리 (배경)
+      ctx.fillRect(bx + 2, by + 4, 30, 48);
+
+      ctx.fillStyle = '#9d174d'; // 자주색 원피스
+      ctx.fillRect(bx + 6, by + 24, 22, 30);
+      
+      ctx.fillStyle = '#fde047'; // 피부
+      ctx.fillRect(bx + 8, by + 8, 18, 16);
+
+      ctx.fillStyle = '#000'; // 눈
+      ctx.fillRect(bx + 12, by + 13, 3, 3);
+      ctx.fillRect(bx + 19, by + 13, 3, 3);
+    } 
+    else if (b.type === 'girl_long') { // 유: 긴머리 여자아이
+      ctx.fillStyle = '#451a03'; // 갈색 긴 머리
+      ctx.fillRect(bx + 3, by + 6, 26, 38);
+
+      ctx.fillStyle = '#7c3aed'; // 보라색 보라 옷
+      ctx.fillRect(bx + 6, by + 22, 20, 24);
+
+      ctx.fillStyle = '#fde047'; // 얼굴
+      ctx.fillRect(bx + 7, by + 8, 18, 14);
+
+      ctx.fillStyle = '#000'; // 눈
+      ctx.fillRect(bx + 11, by + 12, 3, 3);
+      ctx.fillRect(bx + 18, by + 12, 3, 3);
+    } 
+    else if (b.type === 'girl_pigtails') { // 아: 양갈래머리 여자아이
+      ctx.fillStyle = '#d97706'; // 양갈래 묶음 머리
+      ctx.fillRect(bx - 4, by + 10, 8, 18); // 왼쪽 양갈래
+      ctx.fillRect(bx + 28, by + 10, 8, 18); // 오른쪽 양갈래
+      ctx.fillRect(bx + 5, by + 4, 22, 10);
+
+      ctx.fillStyle = '#dc2626'; // 머리끈
+      ctx.fillRect(bx + 1, by + 10, 4, 4);
+      ctx.fillRect(bx + 27, by + 10, 4, 4);
+
+      ctx.fillStyle = '#ea580c'; // 노란/주황 옷
+      ctx.fillRect(bx + 6, by + 22, 20, 24);
+
+      ctx.fillStyle = '#fde047'; // 얼굴
+      ctx.fillRect(bx + 7, by + 8, 18, 14);
+
+      ctx.fillStyle = '#000';
+      ctx.fillRect(bx + 11, by + 12, 3, 3);
+      ctx.fillRect(bx + 18, by + 12, 3, 3);
+    }
+
+    // 이름표 (검은 테두리 고대비)
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 3;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.strokeText(b.name, bx + 16, by - 8);
+    ctx.fillText(b.name, bx + 16, by - 8);
+
+    ctx.restore();
   }
 
   function updateBoss() {
@@ -608,14 +700,16 @@
           vx: -(3 + Math.random() * 4 + (loopCount * 0.3)),
           vy: -(4 + Math.random() * 4),
           gravity: 0.25,
-          width: 20,
+          width: 22,
           height: 18,
           type: type,
           points: pts
         });
         b.thrownCount++;
       }
-      if (b.thrownCount >= b.snackPool.length && b.timer > b.snackPool.length * b.throwInterval + 30) {
+      
+      // 보스 등장 유지시간 정확히 10초 (600 프레임) 설정
+      if (b.timer >= 600) {
         b.state = 'leaving';
       }
     } else if (b.state === 'leaving') {
@@ -642,16 +736,7 @@
     }
 
     if (currentBoss) {
-      ctx.save();
-      ctx.fillStyle = b.color;
-      ctx.fillRect(b.x + 6, b.y + 24, 20, 28);
-      ctx.fillStyle = '#fde047';
-      ctx.fillRect(b.x + 8, b.y + 6, 16, 18);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px Courier New';
-      ctx.textAlign = 'center';
-      ctx.fillText(b.name, b.x + 16, b.y - 6);
-      ctx.restore();
+      drawBossCharacter(currentBoss);
     }
   }
 
@@ -687,7 +772,7 @@
     fishesCollected = 0;
     hp = maxHp;
     invincibleTimer = 0;
-    hasShield = false;
+    shieldTimer = 0;
     feverGauge = 0;
     isFever = false;
     feverTimer = 0;
@@ -714,6 +799,7 @@
     }
 
     if (invincibleTimer > 0) invincibleTimer--;
+    if (shieldTimer > 0) shieldTimer--; // 방어막 타이머 차감
     if (comboTimer > 0) comboTimer--; else comboCount = 0;
     if (magnetTimer > 0) magnetTimer--;
     if (catnipTimer > 0) catnipTimer--;
@@ -739,14 +825,20 @@
 
     ctx.fillStyle = theme.ground;
     ctx.fillRect(0, 240, canvas.width, 80);
+    ctx.fillStyle = '#fbbf24'; // 바닥 명확한 구분선
+    ctx.fillRect(0, 240, canvas.width, 4);
 
     if (!gameStarted) {
       cat.draw();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 22px Courier New';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.font = 'bold 22px sans-serif';
       ctx.textAlign = 'center';
+      ctx.strokeText('🐱 터치/버튼으로 시작!', canvas.width / 2, 120);
       ctx.fillText('🐱 터치/버튼으로 시작!', canvas.width / 2, 120);
-      ctx.font = '14px Courier New';
+      ctx.font = '14px sans-serif';
+      ctx.strokeText(`최고 기록: ${highScore}점`, canvas.width / 2, 150);
       ctx.fillText(`최고 기록: ${highScore}점`, canvas.width / 2, 150);
       requestAnimationFrame(gameLoop);
       return;
@@ -764,44 +856,48 @@
     updateBoss();
 
     itemTimer++;
-    if (itemTimer > 300 + Math.random() * 200) {
+    if (itemTimer > 280 + Math.random() * 200) {
       createSpecialItem();
       itemTimer = 0;
     }
 
-    // 아이템 습득 및 아이템 아이콘 그리기
+    // 아이템 - 선명한 검은 아웃라인 & 시각 선명도 강화
     for (let i = items.length - 1; i >= 0; i--) {
       const it = items[i];
       if (!gameOver) it.x -= it.speed;
 
       ctx.save();
-      let itemBg = '#0ea5e9';
+      let itemBg = '#00d2ff';
       let itemSymbol = '🛡️';
       if (it.type === 'catnip') { itemBg = '#10b981'; itemSymbol = '🌿'; }
-      if (it.type === 'magnet') { itemBg = '#a855f7'; itemSymbol = '🧲'; }
+      if (it.type === 'magnet') { itemBg = '#c084fc'; itemSymbol = '🧲'; }
       if (it.type === 'spray') { itemBg = '#f97316'; itemSymbol = '💦'; }
 
+      // 외각선 보강
       ctx.fillStyle = itemBg;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(it.x + 12, it.y + 12, 12, 0, Math.PI * 2);
+      ctx.arc(it.x + 13, it.y + 13, 13, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
 
-      ctx.font = '12px Segoe UI Emoji, sans-serif';
+      ctx.font = '13px Segoe UI Emoji, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(itemSymbol, it.x + 12, it.y + 16);
+      ctx.fillText(itemSymbol, it.x + 13, it.y + 17);
       ctx.restore();
 
       if (cat.x < it.x + it.width && cat.x + cat.width > it.x && cat.y < it.y + it.height && cat.y + cat.height > it.y) {
         audio.playCrunchSound();
         if (it.type === 'shield') {
-          hasShield = true;
-          floatingTexts.push({ x: it.x, y: it.y, text: '🛡️ 방어막! (충돌 1회 방어)', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
+          shieldTimer = 600; // 방어막 10초 적용 및 먹을 때마다 10초 리셋!
+          floatingTexts.push({ x: it.x, y: it.y, text: '🛡️ 방어막 (10초 보호/리셋)!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
         } else if (it.type === 'catnip') {
           catnipTimer = 360;
           floatingTexts.push({ x: it.x, y: it.y, text: '🌿 캣잎! (저중력 높은점프)', alpha: 1.0, vy: -1.5, color: '#34d399' });
         } else if (it.type === 'magnet') {
           magnetTimer = 360;
-          floatingTexts.push({ x: it.x, y: it.y, text: '🧲 자석! (간식 자동흡수)', alpha: 1.0, vy: -1.5, color: '#c084fc' });
+          floatingTexts.push({ x: it.x, y: it.y, text: '🧲 강력자석! (400px 흡수)', alpha: 1.0, vy: -1.5, color: '#c084fc' });
         } else if (it.type === 'spray') {
           sprayTimer = 180;
           floatingTexts.push({ x: it.x, y: it.y, text: '💦 물뿌리개! (시야 방해)', alpha: 1.0, vy: -1.5, color: '#f97316' });
@@ -810,6 +906,7 @@
       }
     }
 
+    // 자석 아이템 기능 - 거리 2배 확장 (400px 범위 내 간식 및 물고기 자동 흡수)
     for (let i = treats.length - 1; i >= 0; i--) {
       const t = treats[i];
       if (!gameOver) {
@@ -817,7 +914,10 @@
           const dx = (cat.x + cat.width/2) - (t.x + t.width/2);
           const dy = (cat.y + cat.height/2) - (t.y + t.height/2);
           const dist = Math.sqrt(dx*dx + dy*dy);
-          if (dist < 200) { t.x += (dx / dist) * 7; t.y += (dy / dist) * 7; }
+          if (dist < 400) { // 기존 200px -> 400px 로 2배 확장!
+            t.x += (dx / dist) * 8.5;
+            t.y += (dy / dist) * 8.5;
+          }
         }
         t.x += t.vx;
         t.y += t.vy;
@@ -825,8 +925,13 @@
         if (t.y >= 222) { t.y = 222; t.vy = 0; t.vx = -3; }
       }
 
-      ctx.fillStyle = t.type === 'can' ? '#0284c7' : (t.type === 'churru' ? '#f43f5e' : '#d97706');
+      ctx.save();
+      ctx.fillStyle = t.type === 'can' ? '#0284c7' : (t.type === 'churru' ? '#f43f5e' : '#eab308');
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
       ctx.fillRect(t.x, t.y, t.width, t.height);
+      ctx.strokeRect(t.x, t.y, t.width, t.height);
+      ctx.restore();
 
       if (cat.x < t.x + t.width && cat.x + cat.width > t.x && cat.y < t.y + t.height && cat.y + cat.height > t.y) {
         audio.playCanSound();
@@ -851,12 +956,30 @@
       fishTimer = 0;
     }
 
+    // 물고기 - 자석 400px 끌어당김 및 아웃라인 선명화
     for (let i = fishes.length - 1; i >= 0; i--) {
       const f = fishes[i];
-      if (!gameOver) f.x -= f.speed;
+      if (!gameOver) {
+        if (magnetTimer > 0) {
+          const dx = (cat.x + cat.width/2) - (f.x + f.width/2);
+          const dy = (cat.y + cat.height/2) - (f.y + f.height/2);
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < 400) { // 자석 끌어당김 2배 확장!
+            f.x += (dx / dist) * 8.5;
+            f.y += (dy / dist) * 8.5;
+          }
+        }
+        f.x -= f.speed;
+      }
+      
       const floatY = f.y + Math.sin(frame * 0.1 + f.bob) * 4;
-      ctx.fillStyle = '#f97316';
-      ctx.fillRect(f.x, floatY, 14, 10);
+      ctx.save();
+      ctx.fillStyle = '#ff6b00';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(f.x, floatY, f.width, f.height);
+      ctx.strokeRect(f.x, floatY, f.width, f.height);
+      ctx.restore();
 
       if (cat.x < f.x + f.width && cat.x + cat.width > f.x && cat.y < floatY + f.height && cat.y + cat.height > floatY) {
         audio.playCrunchSound();
@@ -868,12 +991,18 @@
       if (f.x + f.width < 0) fishes.splice(i, 1);
     }
 
+    // 장애물 - 고대비 색상 및 검은 테두리 추가로 가시성 완벽 해결
     for (let i = obstacles.length - 1; i >= 0; i--) {
       const obs = obstacles[i];
       if (!gameOver) obs.x -= obs.speed;
 
-      ctx.fillStyle = obs.type === 'ball' ? '#ef4444' : '#b45309';
+      ctx.save();
+      ctx.fillStyle = obs.type === 'ball' ? '#ff1744' : (obs.type === 'tall_box' ? '#ff9100' : '#ffd600');
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2.5;
       ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+      ctx.restore();
 
       if (cat.x + 6 < obs.x + obs.width && cat.x + cat.width - 6 > obs.x && cat.y + 6 < obs.y + obs.height && cat.y + cat.height > obs.y) {
         if (isFever) {
@@ -883,20 +1012,21 @@
           continue;
         }
 
+        // 방어막(10초) 유지 중이면 대미지 완전 차감 방지
+        if (shieldTimer > 0) {
+          audio.playHitSound();
+          floatingTexts.push({ x: cat.x, y: cat.y, text: '🛡️ 방어막 차단!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
+          obstacles.splice(i, 1);
+          continue;
+        }
+
         if (invincibleTimer <= 0) {
-          if (hasShield) {
-            hasShield = false;
-            invincibleTimer = 45;
-            audio.playHitSound();
-            floatingTexts.push({ x: cat.x, y: cat.y, text: '🛡️ 방어막 파괴!', alpha: 1.0, vy: -1.5, color: '#38bdf8' });
-          } else {
-            hp--;
-            invincibleTimer = 60;
-            audio.playHitSound();
-            if (hp <= 0 && !gameOver) {
-              gameOver = true;
-              audio.playGameOver();
-            }
+          hp--;
+          invincibleTimer = 60;
+          audio.playHitSound();
+          if (hp <= 0 && !gameOver) {
+            gameOver = true;
+            audio.playGameOver();
           }
         }
       }
@@ -920,49 +1050,69 @@
       ctx.save();
       ctx.globalAlpha = Math.max(0, ft.alpha);
       ctx.fillStyle = ft.color || '#fde047';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
       ctx.font = 'bold 15px sans-serif';
       ctx.textAlign = 'center';
+      ctx.strokeText(ft.text, ft.x, ft.y);
       ctx.fillText(ft.text, ft.x, ft.y);
       ctx.restore();
       if (ft.alpha <= 0) floatingTexts.splice(i, 1);
     }
 
-    // 상단 HUD UI 정보
+    // 상단 HUD UI (검은 테두리 아웃라인으로 식별성 강화)
+    ctx.save();
     ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2.5;
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`STAGE ${loopCount}-${stageCount} (${theme.name})`, 15, 25);
-    ctx.fillText(`SCORE: ${score}`, 210, 25);
+    
+    const stageText = `STAGE ${loopCount}-${stageCount} (${theme.name})`;
+    ctx.strokeText(stageText, 15, 25);
+    ctx.fillText(stageText, 15, 25);
+
+    const scoreText = `SCORE: ${score}`;
+    ctx.strokeText(scoreText, 220, 25);
+    ctx.fillText(scoreText, 220, 25);
 
     let heartsText = '';
     for (let h = 0; h < maxHp; h++) heartsText += h < hp ? '❤️' : '🖤';
     ctx.fillText(heartsText, canvas.width - 85, 25);
 
-    // 활성화된 아이템 버프/디버프 상태 실시간 표시
-    ctx.font = 'bold 12px sans-serif';
+    // 버프/디버프 상태 및 남아있는 시간 실시간 디스플레이
     let statusX = 15;
-    if (hasShield) {
+    if (shieldTimer > 0) {
       ctx.fillStyle = '#38bdf8';
-      ctx.fillText('🛡️방어막', statusX, 48);
-      statusX += 65;
+      const shieldTxt = `🛡️방어막(${Math.ceil(shieldTimer/60)}s)`;
+      ctx.strokeText(shieldTxt, statusX, 48);
+      ctx.fillText(shieldTxt, statusX, 48);
+      statusX += 95;
     }
     if (catnipTimer > 0) {
       ctx.fillStyle = '#34d399';
-      ctx.fillText(`🌿점프UP(${Math.ceil(catnipTimer/60)}s)`, statusX, 48);
+      const catnipTxt = `🌿점프UP(${Math.ceil(catnipTimer/60)}s)`;
+      ctx.strokeText(catnipTxt, statusX, 48);
+      ctx.fillText(catnipTxt, statusX, 48);
       statusX += 95;
     }
     if (magnetTimer > 0) {
       ctx.fillStyle = '#c084fc';
-      ctx.fillText(`🧲자석(${Math.ceil(magnetTimer/60)}s)`, statusX, 48);
-      statusX += 80;
+      const magTxt = `🧲자석(${Math.ceil(magnetTimer/60)}s)`;
+      ctx.strokeText(magTxt, statusX, 48);
+      ctx.fillText(magTxt, statusX, 48);
+      statusX += 85;
     }
     if (sprayTimer > 0) {
       ctx.fillStyle = '#f97316';
-      ctx.fillText(`💦시야방해(${Math.ceil(sprayTimer/60)}s)`, statusX, 48);
+      const sprayTxt = `💦시야방해(${Math.ceil(sprayTimer/60)}s)`;
+      ctx.strokeText(sprayTxt, statusX, 48);
+      ctx.fillText(sprayTxt, statusX, 48);
     }
+    ctx.restore();
 
     if (gameOver) {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
